@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="parkjunu.apply.com.hwajunghighschoolapply">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".LoginActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MainSelection" />
+        <activity android:name=".ClassApply" />
+        <activity android:name=".Apply" />
+        <activity android:name=".ApplyHistory" />
+        <activity android:name=".ClassApplyHistory" />
+        <activity android:name=".SettingActivity" />
+        <activity android:name=".SchoolFoodNotice" />
+        <activity android:name=".Splash" />
+        <activity android:name=".ApplyTable"></activity>
+    </application>
+
+</manifest>
