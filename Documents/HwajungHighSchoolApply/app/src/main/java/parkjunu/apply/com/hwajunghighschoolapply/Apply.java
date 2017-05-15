@@ -43,6 +43,7 @@ public class Apply extends AppCompatActivity {
         setContentView(R.layout.activity_apply);
         driverNum = getIntent().getExtras().getInt("driver_num");
         listView = (ListView)findViewById(R.id.list_view_apply);
+        items.add(new SimpleListItem("제목", null));
         applyListAdapter = new ApplyListAdapter(getApplicationContext(),items);
         listView.setAdapter(applyListAdapter);
         new GetList().execute();
@@ -50,6 +51,8 @@ public class Apply extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null)
+                    return;
                 new GetTable(((SimpleListItem)parent.getAdapter().getItem(position)).getLink()).execute();
                 Intent intent = new Intent(getApplicationContext(), ApplyTable.class);
                 intent.putExtra("driver_num", driverNum);
@@ -118,18 +121,18 @@ public class Apply extends AppCompatActivity {
     private class GetList extends AsyncTask<Void, Void, Void>{
         URL url;
         String response;
-        ProgressDialog progressDialog;
+        ProgressDialog dialog;
 
         public GetList(){
-            progressDialog = new ProgressDialog(getApplicationContext());
-            progressDialog.setMessage("수강 신청 목록을 가져오는 중입니다,");
-            progressDialog.setCancelable(false);
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog = new ProgressDialog(getApplicationContext());
+            dialog.setMessage("수강 신청 목록을 가져오는 중입니다.");
+            dialog.setCancelable(false);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         }
 
         @Override
         protected void onPreExecute() {
-            progressDialog.show();
+            dialog.show();
             super.onPreExecute();
         }
 
@@ -167,7 +170,7 @@ public class Apply extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            progressDialog.dismiss();
+            dialog.dismiss();
             super.onPostExecute(aVoid);
         }
     }

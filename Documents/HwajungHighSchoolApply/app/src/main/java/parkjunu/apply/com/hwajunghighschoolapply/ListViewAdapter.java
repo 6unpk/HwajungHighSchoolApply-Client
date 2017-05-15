@@ -11,9 +11,9 @@ import java.util.ArrayList;
 
 public class ListViewAdapter extends BaseAdapter {
     LayoutInflater inflater;
-    ArrayList<ListItem> items;
+    ArrayList<SimpleListItem> items;
 
-    public ListViewAdapter(Context context, ArrayList<ListItem> items){
+    public ListViewAdapter(Context context, ArrayList<SimpleListItem> items){
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.items = items;
     }
@@ -39,16 +39,12 @@ public class ListViewAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.list_view_layout, parent, false);
         }
 
-        ListItem listItem = items.get(position);
+        SimpleListItem listItem = items.get(position);
 
         TextView column1 = (TextView)convertView.findViewById(R.id.column1);
         column1.setText(listItem.getColumn1());
         TextView column2 = (TextView)convertView.findViewById(R.id.column2);
-        column2.setText(listItem.getColumn2());
-        TextView column3 = (TextView)convertView.findViewById(R.id.column3);
-        column3.setText(listItem.getColumn3());
-        TextView column4 = (TextView)convertView.findViewById(R.id.column4);
-        column4.setText(listItem.getColumn4());
+        column2.setText(listItem.getLink());
 
         return convertView;
     }

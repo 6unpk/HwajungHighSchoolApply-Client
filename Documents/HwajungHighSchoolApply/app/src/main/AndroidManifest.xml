@@ -26,7 +26,10 @@
         <activity android:name=".SettingActivity" />
         <activity android:name=".SchoolFoodNotice" />
         <activity android:name=".Splash" />
-        <activity android:name=".ApplyTable"></activity>
+        <activity android:name=".ApplyTable" />
+        <activity android:name=".AfterApply" />
+        <activity android:name=".AfterApplyHistory" />
+        <activity android:name=".ApplyHistoryTable"></activity>
     </application>
 
 </manifest>

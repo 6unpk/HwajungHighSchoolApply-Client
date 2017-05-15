@@ -7,13 +7,17 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.IntegerRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cengalabs.flatui.views.FlatEditText;
@@ -52,31 +56,33 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        // startActivity(new Intent(getApplicationContext(), Splash.class));
-        startActivity(new Intent(getApplicationContext(), ApplyTable.class));
+        startActivity(new Intent(getApplicationContext(), Splash.class));
 
         User_ID = (FlatEditText) findViewById(R.id.user_id);
         Password = (FlatEditText) findViewById(R.id.password);
         submitButton = (Button) findViewById(R.id.submit);
         pwFindButton = (Button) findViewById(R.id.password_find);
 
-        submitButton.setOnClickListener(new View.OnClickListener() {
+        Password.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
-            public void onClick(View v) {
-                if (!NetworkConnection()) {
-                    Toast.makeText(getApplicationContext(), "Check the Network", Toast.LENGTH_SHORT).show();
-                    return;
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                switch (actionId){
+                    case EditorInfo.IME_ACTION_GO:
+                        executeLogin();
+                        break;
                 }
-                if (!User_ID.getText().toString().equals("") && !Password.getText().toString().equals("")) {
-                    // 로그인 실행
-                        new SendPost(User_ID.getText().toString(), Password.getText().toString()).execute();
-                        User_ID.setText("");
-                        Password.setText("");
-                } else
-                    Toast.makeText(getApplicationContext(), "아이디와 패스워드를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                return true;
             }
         });
 
+        submitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                executeLogin();
+            }
+        });
+
+        // 비번 찾기 버튼
         pwFindButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,6 +92,20 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    private void executeLogin(){
+        if (!NetworkConnection()) {
+            Toast.makeText(getApplicationContext(), "Check the Network", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!User_ID.getText().toString().equals("") && !Password.getText().toString().equals("")) {
+            // 로그인 실행
+            new SendPost(User_ID.getText().toString(), Password.getText().toString()).execute();
+            User_ID.setText("");
+            Password.setText("");
+        } else
+            Toast.makeText(getApplicationContext(), "아이디와 패스워드를 입력해주세요.", Toast.LENGTH_SHORT).show();
     }
 
     private class SendPost extends AsyncTask<Void, Void, Void>{
@@ -113,9 +133,9 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 url = new URL(HOST_ADDRESS);
                 HttpClient httpClient = new DefaultHttpClient();
-                // HTTP 커넥션 TIMEOUT: 15초 제한
-                httpClient.getParams().setParameter("http.socket.timeout",15000);
-                httpClient.getParams().setParameter("http.connection.timeout",150000);
+                // HTTP 커넥션 TIMEOUT: 35초 제한
+                httpClient.getParams().setParameter("http.socket.timeout",350000);
+                httpClient.getParams().setParameter("http.connection.timeout",350000);
                 HttpPost httpPost = new HttpPost();
                 httpPost.setURI(url.toURI());
 
@@ -150,7 +170,7 @@ public class LoginActivity extends AppCompatActivity {
                     dialog.dismiss();
 
                     // 여기서 response 는 서버로 부터 받는 유저 이름값
-                    startActivity(new Intent(getApplicationContext(), MainSelection.class).putExtra("user_name",response).putExtra("driver_num", args[1]));
+                    startActivity(new Intent(getApplicationContext(), MainSelection.class).putExtra("user_name",response).putExtra("driver_num", Integer.parseInt(args[1])));
                 }
                 else{
                     // 로그인 실패시

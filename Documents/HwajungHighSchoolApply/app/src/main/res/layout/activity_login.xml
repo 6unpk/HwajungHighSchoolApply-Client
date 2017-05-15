@@ -73,6 +73,7 @@
                     android:layout_gravity = "center|center_horizontal"
                     android:layout_margin="1dp"
                     android:maxEms="20"
+                    android:imeOptions="actionGo"
                     android:singleLine="true"
                     android:password="true"
                     android:id="@+id/password"

@@ -99,22 +99,25 @@ public class MainSelection extends AppCompatActivity {
                     case 0:
                         // 수강신청
                         Intent apply = new Intent(getApplicationContext(), Apply.class);
-                        apply.putExtra("driver_name", driverNum);
+                        apply.putExtra("driver_num", driverNum);
                         startActivity(apply);
                         break;
                     case 1:
                         // 방과후 수강신청
+                        Intent afterApply = new Intent(getApplicationContext(), AfterApply.class);
+                        afterApply.putExtra("driver_num", driverNum);
+                        startActivity(afterApply);
                         break;
                     case 2:
                         // 수강신청 내역
                         Intent applyHis = new Intent(getApplicationContext(), ApplyHistory.class);
-                        applyHis.putExtra("driver_name", driverNum);
+                        applyHis.putExtra("driver_num", driverNum);
                         startActivity(applyHis);
                         break;
                     case 3:
                         // 방과후 수강신청 내역
                         Intent afterApplyHis = new Intent(getApplicationContext(), ClassApplyHistory.class);
-                        afterApplyHis.putExtra("driver_name", driverNum);
+                        afterApplyHis.putExtra("driver_num", driverNum);
                         startActivity(afterApplyHis);
                         break;
                     case 4:
@@ -122,7 +125,8 @@ public class MainSelection extends AppCompatActivity {
                         break;
                     case 5:
                         // 설정
-
+                        Intent setting = new Intent(getApplicationContext(), SettingActivity.class);
+                        startActivity(setting);
                         break;
                     default:
                         break;

@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public class ClassApplyHistory extends AppCompatActivity {
     ListView listView;
     ListViewAdapter listViewAdapter;
-    ArrayList<ListItem> items = new ArrayList<>();
+    ArrayList<SimpleListItem> items = new ArrayList<>();
     static final String HOST_ADDRESS_APPLY_HISTORY = "http://10.24.36.199:5000/class_apply_history";
     static int driverNum;
 
@@ -38,7 +38,7 @@ public class ClassApplyHistory extends AppCompatActivity {
         listView.setAdapter(listViewAdapter);
 
         driverNum = getIntent().getExtras().getInt("driver_num");
-        items.add(new ListItem("제목","대상","신청 기간","기간",""));
+        items.add(new SimpleListItem("제목",null));
         RequestApplyHistory request = new RequestApplyHistory();
         request.execute();
         listViewAdapter.notifyDataSetChanged();
@@ -84,11 +84,8 @@ public class ClassApplyHistory extends AppCompatActivity {
                 for (int i = 0; i < jsonObject.length(); ++i){
                     String link = jsonObject.getJSONObject(""+(i+1)).getString("link");
                     String title = jsonObject.getJSONObject(""+(i+1)).getString("title");
-                    String target = jsonObject.getJSONObject(""+(i+1)).getString("target");
-                    String term = jsonObject.getJSONObject(""+(i+1)).getString("term");
-                    String apply_term = jsonObject.getJSONObject(""+(i+1)).getString("apply_term");
 
-                    items.add(new ListItem(title,target,apply_term,term,link));
+                    items.add(new SimpleListItem(title,link));
                 }
                 listViewAdapter.notifyDataSetChanged();
 
