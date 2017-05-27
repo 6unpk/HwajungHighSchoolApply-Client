@@ -2,11 +2,14 @@ package parkjunu.apply.com.hwajunghighschoolapply;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,8 +40,8 @@ import java.util.List;
 
 public class MainSelection extends AppCompatActivity {
     static String name;
-    static int driverNum;
-
+    static String driverNum;
+    Boolean isLogOutFinished = false;
     TextView userName;
     Button logOut;
     Button infoEdit;
@@ -47,7 +50,8 @@ public class MainSelection extends AppCompatActivity {
     GridAdapter gridAdapter;
     List<String> gridTitle;
     List<Drawable> gridImage;
-    
+    ProgressDialog dialog;
+
     // TODO: 2017-05-07 HTTP 통신 전에 반드시 네트워크 체크 과정 넣기 
     // TODO: 2017-05-07 서버와 통신이 안되는 경우 Connection Time Out 설정 하기 
     // TODO: 2017-05-13      
@@ -60,14 +64,22 @@ public class MainSelection extends AppCompatActivity {
         logOut = (Button)findViewById(R.id.logout);
         infoEdit = (Button)findViewById(R.id.info_edit);
         name = "이름:"+getIntent().getExtras().getString("user_name");
-        driverNum = getIntent().getExtras().getInt("driver_num");
-
+        driverNum = getIntent().getExtras().getString("driver_num");
+        dialog = new ProgressDialog(MainSelection.this);
         userName.setText(name);
 
         logOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new LogOut().execute();
+                try {
+                    while (new LogOut().execute().get()) {
+                        dialog.dismiss();
+                        finish();
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Log.e("error",""+e);
+                }
             }
         });
 
@@ -95,6 +107,10 @@ public class MainSelection extends AppCompatActivity {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (!NetworkConnection()){
+                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 switch (position){
                     case 0:
                         // 수강신청
@@ -116,7 +132,7 @@ public class MainSelection extends AppCompatActivity {
                         break;
                     case 3:
                         // 방과후 수강신청 내역
-                        Intent afterApplyHis = new Intent(getApplicationContext(), ClassApplyHistory.class);
+                        Intent afterApplyHis = new Intent(getApplicationContext(), AfterApplyHistory.class);
                         afterApplyHis.putExtra("driver_num", driverNum);
                         startActivity(afterApplyHis);
                         break;
@@ -136,10 +152,9 @@ public class MainSelection extends AppCompatActivity {
 
     }
 
-    private class LogOut extends AsyncTask<Void, Void, Void>{
-        final String HOST_LOGOUT_ADDRESS ="http://122.37.102.82:5000/logout";
+    private class LogOut extends AsyncTask<Boolean, Void, Boolean>{
+        final String HOST_LOGOUT_ADDRESS ="http://45.32.52.41:5000/logout";
         URL url;
-        ProgressDialog dialog = new ProgressDialog(MainSelection.this);
 
         public LogOut(){
             dialog.setMessage("로그 아웃 중입니다.");
@@ -155,7 +170,7 @@ public class MainSelection extends AppCompatActivity {
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Boolean doInBackground(Boolean... booleen ){
             try {
                 url = new URL(HOST_LOGOUT_ADDRESS);
                 HttpClient httpClient = new DefaultHttpClient();
@@ -163,37 +178,61 @@ public class MainSelection extends AppCompatActivity {
                 httpPost.setURI(url.toURI());
 
                 ArrayList<NameValuePair> post = new ArrayList<>(1);
-                post.add(new BasicNameValuePair("driver_num", Integer.toString(driverNum)));
+                post.add(new BasicNameValuePair("driver_num", driverNum));
 
                 httpPost.setEntity(new UrlEncodedFormEntity(post));
 
                 HttpResponse httpResponse = httpClient.execute(httpPost);
                 String response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
                 if(response.equals("Logout")) {
-                 }
+                    isLogOutFinished = true;
+                    return true;
+                }
 
             }catch (Exception e){
                 e.printStackTrace();
                 Log.e("error", "" +e );
+                dialog.dismiss();
+                return false;
             }
-
-            return null;
+            return false;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            dialog.dismiss();
+        protected void onPostExecute(Boolean aVoid) {
             Toast.makeText(getApplicationContext(), "로그 아웃 되었습니다.", Toast.LENGTH_LONG).show();
-            finish();
+            super.onPostExecute(aVoid);
         }
     }
 
     @Override
     public void onBackPressed() {
         // 뒤로 가기 눌렀을시
-        new LogOut().execute();
         super.onBackPressed();
+        new AlertDialog.Builder(MainSelection.this)
+                .setTitle("로그아웃")
+                .setMessage("로그아웃 하시겠습니까?")
+                .setNegativeButton("아니오", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        return;
+                    }
+                })
+                .setPositiveButton("예", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            while (new LogOut().execute().get()) {
+                                dialog.dismiss();
+                                finish();
+                            }
+                        }catch (Exception e){
+                            e.printStackTrace();
+                            Log.e("error",""+e);
+                        }
+                    }
+                })
+                .show();
     }
 
     @Override
@@ -220,29 +259,36 @@ public class MainSelection extends AppCompatActivity {
             imageView.setImageDrawable(gridImage.get(position));
             textView.setText(gridTitle.get(position));
 
-            imageView.setOnClickListener(new View.OnClickListener() {
+            imageView.setOnClickListener(new Button.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (!NetworkConnection()){
+                        Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     switch (position){
                         case 0:
                             // 수강신청
                             Intent apply = new Intent(getApplicationContext(), Apply.class);
-                            apply.putExtra("driver_name", driverNum);
+                            apply.putExtra("driver_num", driverNum);
                             startActivity(apply);
                             break;
                         case 1:
                             // 방과후 수강신청
+                            Intent afterApply = new Intent(getApplicationContext(), AfterApply.class);
+                            afterApply.putExtra("driver_num", driverNum);
+                            startActivity(afterApply);
                             break;
                         case 2:
                             // 수강신청 내역
                             Intent applyHis = new Intent(getApplicationContext(), ApplyHistory.class);
-                            applyHis.putExtra("driver_name", driverNum);
+                            applyHis.putExtra("driver_num", driverNum);
                             startActivity(applyHis);
                             break;
                         case 3:
                             // 방과후 수강신청 내역
-                            Intent afterApplyHis = new Intent(getApplicationContext(), ClassApplyHistory.class);
-                            afterApplyHis.putExtra("driver_name", driverNum);
+                            Intent afterApplyHis = new Intent(getApplicationContext(), AfterApplyHistory.class);
+                            afterApplyHis.putExtra("driver_num", driverNum);
                             startActivity(afterApplyHis);
                             break;
                         case 4:
@@ -250,7 +296,8 @@ public class MainSelection extends AppCompatActivity {
                             break;
                         case 5:
                             // 설정
-
+                            Intent setting = new Intent(getApplicationContext(), SettingActivity.class);
+                            startActivity(setting);
                             break;
                         default:
                             break;
@@ -275,6 +322,21 @@ public class MainSelection extends AppCompatActivity {
         public long getItemId(int position) {
             return position;
         }
+
+    }
+
+    public boolean NetworkConnection() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        boolean isMobileAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isAvailable();
+        boolean isWifiAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isAvailable();
+
+        boolean isMobileConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
+        boolean isWifiConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+
+        if ((isMobileAvailable && isMobileConnect) || (isWifiAvailable && isWifiConnect))
+            return true;
+        return false;
 
     }
 

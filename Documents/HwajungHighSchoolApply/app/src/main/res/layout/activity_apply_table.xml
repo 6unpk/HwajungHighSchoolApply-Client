@@ -13,23 +13,30 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:weightSum="4">
-        <TableLayout
-            android:id="@+id/left_table"
+        android:orientation="vertical"
+        >
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="3"
-            android:stretchColumns="*">
+            android:layout_height="wrap_content"
+            android:gravity="right">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
 
+            <com.cengalabs.flatui.views.FlatButton
+                android:id="@+id/submit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="저장하기"/>
 
-        </TableLayout>
+        </LinearLayout>
         <TableLayout
-            android:id="@+id/right_table"
+            android:id="@+id/table"
             android:stretchColumns="*"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1">
+            >
         </TableLayout>
     </LinearLayout>
 </RelativeLayout>

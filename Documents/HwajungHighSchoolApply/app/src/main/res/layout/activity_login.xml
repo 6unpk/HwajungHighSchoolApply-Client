@@ -10,23 +10,29 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     tools:context="parkjunu.apply.com.hwajunghighschoolapply.LoginActivity">
 
-
-    <LinearLayout
-        android:orientation="vertical"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+            <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
             android:layout_weight="1">
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="143dp"
+                android:layout_height="100dp"
+                android:id="@+id/hwajung"
                 android:src="@drawable/hwajung"/>
         </LinearLayout>
 
@@ -78,6 +84,14 @@
                     android:password="true"
                     android:id="@+id/password"
                     />
+
+                <CheckBox
+                    android:text="로그인 정보 저장"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColorHint="@color/deep_light"
+                    android:theme="@style/CheckBox"
+                    android:id="@+id/save_login" />
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -132,11 +146,26 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="bottom|center"
-                android:id="@+id/textView"
+                android:id="@+id/developer"
                 android:layout_margin="4dp"
                 android:layout_weight="1"
                 />
         </LinearLayout>
     </LinearLayout>
+
+
+        <com.melnykov.fab.FloatingActionButton
+            android:id="@+id/setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:padding="32dp"
+            android:src="@drawable/setting_main"
+            flatui:fab_colorNormal="@color/deep_light"
+            flatui:fab_shadow="false"
+            flatui:fab_type="normal"
+
+            />
+    </FrameLayout>
 
 </RelativeLayout>

@@ -27,21 +27,20 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: 2017-05-09 수강 신청 목록 가져오기 코드 완성 
 public class Apply extends AppCompatActivity {
     ListView listView;
     ApplyListAdapter applyListAdapter;
     ArrayList<SimpleListItem> items = new ArrayList<>();
-    static final String HOST_ADDRESS_APPLY_LIST = "http://122.37.102.82:5000/apply_list";
-    static final String HOST_ADDRESS_APPLY_TABLE = "http://122.37.102.82:5000/apply_table";
-    static int driverNum;
+    static final String HOST_ADDRESS_APPLY_LIST = "http://45.32.52.41:5000/apply_list";
+    static final String HOST_ADDRESS_APPLY_TABLE = "http://45.32.52.41:5000/apply_table";
+    static String driverNum;
     String source;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_apply);
-        driverNum = getIntent().getExtras().getInt("driver_num");
+        driverNum = getIntent().getExtras().getString("driver_num");
         listView = (ListView)findViewById(R.id.list_view_apply);
         items.add(new SimpleListItem("제목", null));
         applyListAdapter = new ApplyListAdapter(getApplicationContext(),items);
@@ -54,11 +53,6 @@ public class Apply extends AppCompatActivity {
                 if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null)
                     return;
                 new GetTable(((SimpleListItem)parent.getAdapter().getItem(position)).getLink()).execute();
-                Intent intent = new Intent(getApplicationContext(), ApplyTable.class);
-                intent.putExtra("driver_num", driverNum);
-                intent.putExtra("source",source);
-                startActivity(intent);
-
             }
         });
         
@@ -124,14 +118,14 @@ public class Apply extends AppCompatActivity {
         ProgressDialog dialog;
 
         public GetList(){
-            dialog = new ProgressDialog(getApplicationContext());
-            dialog.setMessage("수강 신청 목록을 가져오는 중입니다.");
-            dialog.setCancelable(false);
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         }
 
         @Override
         protected void onPreExecute() {
+            dialog = new ProgressDialog(Apply.this);
+            dialog.setMessage("수강 신청 목록을 가져오는 중입니다.");
+            dialog.setCancelable(false);
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             dialog.show();
             super.onPreExecute();
         }
@@ -145,7 +139,7 @@ public class Apply extends AppCompatActivity {
                 httpPost.setURI(url.toURI());
 
                 ArrayList<NameValuePair> post = new ArrayList<>();
-                post.add(new BasicNameValuePair("driver_num",""+driverNum));
+                post.add(new BasicNameValuePair("driver_num", driverNum));
 
                 httpPost.setEntity(new UrlEncodedFormEntity(post));
 
@@ -171,6 +165,20 @@ public class Apply extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             dialog.dismiss();
+            try {
+                JSONObject jsonObject =new JSONObject(response);
+                for(int i = 0; i < jsonObject.length(); ++i){
+                    String link = jsonObject.getJSONObject(""+(i+1)).getString("link");
+                    String title = jsonObject.getJSONObject(""+(i+1)).getString("title");
+
+                    items.add(new SimpleListItem(title, link));
+                }
+                applyListAdapter.notifyDataSetChanged();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            dialog.dismiss();
+
             super.onPostExecute(aVoid);
         }
     }

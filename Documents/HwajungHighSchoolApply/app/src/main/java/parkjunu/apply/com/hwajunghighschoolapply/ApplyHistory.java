@@ -28,9 +28,9 @@ public class ApplyHistory extends AppCompatActivity {
     ListView listView;
     ListViewAdapter listViewAdapter;
     ArrayList<SimpleListItem> items = new ArrayList<>();
-    static final String HOST_ADDRESS_APPLY_HISTORY = "http://122.37.102.82:5000/apply_history";
-    static final String HOST_ADDRESS_APPLY_HISTORY_TABLE = "http://122.37.102.82:5000/apply_history_table";
-    static int driverNum;
+    static final String HOST_ADDRESS_APPLY_HISTORY = "http://45.32.52.41:5000/apply_history";
+    static final String HOST_ADDRESS_APPLY_HISTORY_TABLE = "http://45.32.52.41:5000/apply_history_table";
+    static String driverNum;
     String source;
 
     @Override
@@ -42,7 +42,7 @@ public class ApplyHistory extends AppCompatActivity {
         listViewAdapter = new ListViewAdapter(ApplyHistory.this, items);
         listView.setAdapter(listViewAdapter);
 
-        driverNum = getIntent().getExtras().getInt("driver_num");
+        driverNum = getIntent().getExtras().getString("driver_num");
         items.add(new SimpleListItem("제목",null));
         RequestApplyHistory request = new RequestApplyHistory();
         request.execute();
@@ -54,11 +54,7 @@ public class ApplyHistory extends AppCompatActivity {
                 if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null)
                     return;
                 new GetTable(((SimpleListItem)parent.getAdapter().getItem(position)).getLink()).execute();
-                Intent intent = new Intent(getApplicationContext(), ApplyHistoryTable.class);
-                intent.putExtra("driver_num",driverNum);
-                intent.putExtra("source",source);
-                startActivity(intent);
-            }
+             }
         });
 
     }
@@ -66,19 +62,19 @@ public class ApplyHistory extends AppCompatActivity {
     private class GetTable extends AsyncTask<Void, Void, Void>{
         URL url;
         String link;
-        ProgressDialog progressDialog;
+        ProgressDialog dialog;
 
         public GetTable(String select){
-            progressDialog = new ProgressDialog(getApplicationContext());
+            dialog = new ProgressDialog(ApplyHistory.this);
             link = select;
-            progressDialog.setMessage("수강신청 정보를 가져오는중 입니다.");
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setCancelable(false);
+            dialog.setMessage("수강신청 정보를 가져오는중 입니다.");
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.setCancelable(false);
         }
 
         @Override
         protected void onPreExecute() {
-            progressDialog.show();
+            dialog.show();
             super.onPreExecute();
         }
 
@@ -91,14 +87,14 @@ public class ApplyHistory extends AppCompatActivity {
                 httpPost.setURI(url.toURI());
 
                 ArrayList<NameValuePair> post = new ArrayList<>();
-                post.add(new BasicNameValuePair("driver_num", ""+driverNum));
+                post.add(new BasicNameValuePair("driver_num", driverNum));
                 post.add(new BasicNameValuePair("url",link));
 
                 httpPost.setEntity(new UrlEncodedFormEntity(post));
 
                 HttpResponse response = httpClient.execute(httpPost);
                 source = EntityUtils.toString(response.getEntity());
-
+                Log.d("tag",""+source);
                 if(source.equals("Error"))
                     source = null;
 
@@ -111,7 +107,12 @@ public class ApplyHistory extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            progressDialog.dismiss();
+            dialog.dismiss();
+            Intent intent = new Intent(getApplicationContext(), ApplyHistoryTable.class);
+            intent.putExtra("driver_num",driverNum);
+            intent.putExtra("source",source);
+            startActivity(intent);
+
             super.onPostExecute(aVoid);
         }
 
@@ -139,28 +140,20 @@ public class ApplyHistory extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                Log.d("tag", "fuck");
                 url = new URL(HOST_ADDRESS_APPLY_HISTORY);
                 HttpClient httpClient = new DefaultHttpClient();
                 HttpPost httpPost = new HttpPost();
                 httpPost.setURI(url.toURI());
 
                 ArrayList<NameValuePair> post = new ArrayList<>();
-                post.add(new BasicNameValuePair("driver_num",Integer.toString(driverNum)));
+                post.add(new BasicNameValuePair("driver_num",driverNum));
 
                 httpPost.setEntity(new UrlEncodedFormEntity(post));
 
                 HttpResponse httpResponse = httpClient.execute(httpPost);
                 response = EntityUtils.toString(httpResponse.getEntity(),HTTP.UTF_8);
                 Log.d("tag", ""+response);
-                JSONObject jsonObject =new JSONObject(response);
-                for(int i = 0; i < jsonObject.length(); ++i){
-                    String link = jsonObject.getJSONObject(""+i).getString("link");
-                    String title = jsonObject.getJSONObject(""+i).getString("title");
 
-                    items.add(new SimpleListItem(title, link));
-                }
-                listViewAdapter.notifyDataSetChanged();
 
             }catch (Exception e){
                 e.printStackTrace();
@@ -172,6 +165,18 @@ public class ApplyHistory extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            try {
+                JSONObject jsonObject =new JSONObject(response);
+                for(int i = 0; i < jsonObject.length(); ++i){
+                    String link = jsonObject.getJSONObject(""+(i+1)).getString("link");
+                    String title = jsonObject.getJSONObject(""+(i+1)).getString("title");
+
+                    items.add(new SimpleListItem(title, link));
+                }
+                listViewAdapter.notifyDataSetChanged();
+            }catch (Exception e){
+                 e.printStackTrace();
+            }
             dialog.dismiss();
         }
     }

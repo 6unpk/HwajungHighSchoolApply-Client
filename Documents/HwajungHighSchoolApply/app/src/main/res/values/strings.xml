@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Hwajung HighSchool Apply</string>
+    <string name="app_name">화정고 수강신청 &amp; 급식 알림</string>
+    <string name="app_version">1.0</string>
+    <string name="app_code">1</string>
 </resources>

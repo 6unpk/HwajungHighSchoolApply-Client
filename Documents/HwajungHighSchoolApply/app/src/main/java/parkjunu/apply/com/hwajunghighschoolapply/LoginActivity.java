@@ -1,26 +1,41 @@
 package parkjunu.apply.com.hwajunghighschoolapply;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Entity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.annotation.IntegerRes;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cengalabs.flatui.views.FlatEditText;
+import com.melnykov.fab.FloatingActionButton;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -45,23 +60,74 @@ import java.util.ArrayList;
 
 public class LoginActivity extends AppCompatActivity {
 
-    static final String HOST_ADDRESS = "http://122.37.102.82:5000";
-    static final String HOST_GET_NAME_ADDRESS ="http://122.37.102.82:5000/get_name";
+    static final String HOST_ADDRESS = "http://45.32.52.41:5000";
+    static final String HOST_GET_NAME_ADDRESS ="http://45.32.52.41:5000/get_name";
     FlatEditText User_ID;
     FlatEditText Password;
+    FloatingActionButton actionButton;
     Button submitButton;
     Button pwFindButton;
+    CheckBox saveLogin;
+    ImageView Hwajung;
+    TextView Developer;
+
+    SharedPreferences pref;
+    SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        startService(new Intent(getApplicationContext(), SchoolFood.class));
         startActivity(new Intent(getApplicationContext(), Splash.class));
+        pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        editor = pref.edit();
+
+        // 앱을 처음 설치해서 실행 시킬때
+        if( pref.getBoolean("is_first", true)){
+            editor.putBoolean("is_first", false);
+            editor.commit();
+            new AlertDialog.Builder(LoginActivity.this).
+                    setTitle("주의 사항").
+                    setMessage("본 어플은 PC 버전 수강신청 사이트보다 다소 느릴 수 있습니다.").
+                    setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            PermissionRequest();
+                        }
+                    }).show();
+        }
+
+        Animation animation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade);
+        animation.setFillAfter(true);
 
         User_ID = (FlatEditText) findViewById(R.id.user_id);
         Password = (FlatEditText) findViewById(R.id.password);
         submitButton = (Button) findViewById(R.id.submit);
         pwFindButton = (Button) findViewById(R.id.password_find);
+        saveLogin = (CheckBox) findViewById(R.id.save_login);
+        Hwajung = (ImageView) findViewById(R.id.hwajung);
+        Developer = (TextView) findViewById(R.id.developer);
+        actionButton = (FloatingActionButton) findViewById(R.id.setting);
+
+        Hwajung.startAnimation(animation);
+        User_ID.startAnimation(animation);
+        Password.startAnimation(animation);
+        submitButton.startAnimation(animation);
+        pwFindButton.startAnimation(animation);
+        saveLogin.startAnimation(animation);
+        Developer.startAnimation(animation);
+        actionButton.startAnimation(animation);
+
+        // 로그인 정보 저장, 체크 되어 있는 경우
+        if(pref.getBoolean("save_login",false)){
+            saveLogin.setChecked(true);
+            User_ID.setText(pref.getString("id",""));
+            Password.setText(pref.getString("pw",""));
+        }
+
+
+
 
         Password.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -91,12 +157,19 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        // 설정 버튼
+        actionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), SettingActivity.class));
+            }
+        });
 
     }
 
     private void executeLogin(){
         if (!NetworkConnection()) {
-            Toast.makeText(getApplicationContext(), "Check the Network", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
             return;
         }
         if (!User_ID.getText().toString().equals("") && !Password.getText().toString().equals("")) {
@@ -108,9 +181,11 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "아이디와 패스워드를 입력해주세요.", Toast.LENGTH_SHORT).show();
     }
 
+    // 로그인 정보 값을 서버로 전송
     private class SendPost extends AsyncTask<Void, Void, Void>{
         private String id, password;
         private String response;
+        Boolean isCheck;
         URL url;
         ProgressDialog dialog = new ProgressDialog(LoginActivity.this);
 
@@ -120,6 +195,7 @@ public class LoginActivity extends AppCompatActivity {
             dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             dialog.setMessage("로그인 중입니다.");
             dialog.setCancelable(false);
+            isCheck = saveLogin.isChecked();
         }
 
         @Override
@@ -168,9 +244,14 @@ public class LoginActivity extends AppCompatActivity {
 
                     dialog.cancel();
                     dialog.dismiss();
-
                     // 여기서 response 는 서버로 부터 받는 유저 이름값
-                    startActivity(new Intent(getApplicationContext(), MainSelection.class).putExtra("user_name",response).putExtra("driver_num", Integer.parseInt(args[1])));
+                    startActivity(new Intent(getApplicationContext(), MainSelection.class).putExtra("user_name",response).putExtra("driver_num", args[1]));
+                    if (isCheck) {
+                        editor.putString("id", id);
+                        editor.putString("pw", password);
+                        editor.putBoolean("save_login", true);
+                        editor.commit();
+                    }
                 }
                 else{
                     // 로그인 실패시
@@ -179,7 +260,6 @@ public class LoginActivity extends AppCompatActivity {
                     Toast fail = new Toast(getApplicationContext());
                     fail.setText("로그인에 실패했습니다.");
                     fail.setDuration(Toast.LENGTH_LONG);
-                    fail.setGravity(Gravity.CENTER, 0, 300);
                     fail.show();
                 }
 
@@ -194,9 +274,32 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+        }
+    }
+
+    public void PermissionRequest(){
+        int permissionWrite = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if(permissionWrite == PackageManager.PERMISSION_DENIED && Build.VERSION.SDK_INT > 23){
+            new AlertDialog.Builder(LoginActivity.this)
+                    .setTitle("권한 설정")
+                    .setMessage("급식 알리미를 사용하기 위해서는 권한을 반드시 체크해주세요!")
+                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if(Build.VERSION.SDK_INT >= 23) // 부팅 알림 권한, 저장소 쓰기/읽기 권한 요청
+                                requestPermissions(new String[]{Manifest.permission.RECEIVE_BOOT_COMPLETED, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                        }
+                    })
+                    .show();
 
         }
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return super.onTouchEvent(event);
+    }
+
     public boolean NetworkConnection() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 

@@ -36,15 +36,13 @@ public class ListViewAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null){
-            convertView = inflater.inflate(R.layout.list_view_layout, parent, false);
+            convertView = inflater.inflate(R.layout.list_view_apply_list_layout, parent, false);
         }
 
         SimpleListItem listItem = items.get(position);
 
         TextView column1 = (TextView)convertView.findViewById(R.id.column1);
         column1.setText(listItem.getColumn1());
-        TextView column2 = (TextView)convertView.findViewById(R.id.column2);
-        column2.setText(listItem.getLink());
 
         return convertView;
     }
