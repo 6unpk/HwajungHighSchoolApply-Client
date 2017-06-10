@@ -33,6 +33,7 @@
         </LinearLayout>
         <TableLayout
             android:id="@+id/table"
+            android:background="@color/background"
             android:stretchColumns="*"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

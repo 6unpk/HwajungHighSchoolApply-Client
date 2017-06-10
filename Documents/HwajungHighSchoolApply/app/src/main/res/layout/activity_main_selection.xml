@@ -43,7 +43,14 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
+                android:weightSum="6"
                 android:orientation="horizontal">
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_weight="1"
+                    />
                 <info.hoang8f.widget.FButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -54,6 +61,8 @@
                     app:buttonColor="@color/colorPrimaryDark"
                     app:shadowHeight="0dp"
                     app:cornerRadius="2dp"
+                    android:textSize="14dp"
+                    android:layout_weight="1"
                     android:text="정보수정"/>
                 <info.hoang8f.widget.FButton
                     android:layout_width="wrap_content"
@@ -64,8 +73,17 @@
                     app:buttonColor="@color/colorPrimaryDark"
                     android:textColor="@color/divide"
                     android:padding="6dp"
+                    android:layout_weight="1"
+                    android:textSize="14dp"
                     android:layout_marginLeft="6dp"
                     android:text="로그아웃"/>
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:visibility="gone"
+                    />
             </LinearLayout>
         </LinearLayout>
 

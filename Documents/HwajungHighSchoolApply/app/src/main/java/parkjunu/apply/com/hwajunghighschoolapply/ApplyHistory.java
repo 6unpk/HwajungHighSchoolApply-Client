@@ -1,7 +1,9 @@
 package parkjunu.apply.com.hwajunghighschoolapply;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -51,7 +53,7 @@ public class ApplyHistory extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null)
+                if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null || !NetworkConnection())
                     return;
                 new GetTable(((SimpleListItem)parent.getAdapter().getItem(position)).getLink()).execute();
              }
@@ -169,9 +171,10 @@ public class ApplyHistory extends AppCompatActivity {
                 JSONObject jsonObject =new JSONObject(response);
                 for(int i = 0; i < jsonObject.length(); ++i){
                     String link = jsonObject.getJSONObject(""+(i+1)).getString("link");
-                    String title = jsonObject.getJSONObject(""+(i+1)).getString("title");
+                    String target = jsonObject.getJSONObject(""+(i+1)).getString("target");
+                    String term = jsonObject.getJSONObject(""+(i+1)).getString("term");
 
-                    items.add(new SimpleListItem(title, link));
+                    items.add(new SimpleListItem(target +" " + term, link));
                 }
                 listViewAdapter.notifyDataSetChanged();
             }catch (Exception e){
@@ -179,6 +182,22 @@ public class ApplyHistory extends AppCompatActivity {
             }
             dialog.dismiss();
         }
+
+    }
+
+    public boolean NetworkConnection() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        boolean isMobileAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isAvailable();
+        boolean isWifiAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isAvailable();
+
+        boolean isMobileConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
+        boolean isWifiConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+
+        if ((isMobileAvailable && isMobileConnect) || (isWifiAvailable && isWifiConnect))
+            return true;
+        return false;
+
     }
 
 

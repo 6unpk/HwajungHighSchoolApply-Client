@@ -42,19 +42,19 @@ public class MainSelection extends AppCompatActivity {
     static String name;
     static String driverNum;
     Boolean isLogOutFinished = false;
+    final String HOST_LOGOUT_ADDRESS ="http://45.32.52.41:5000/logout";
     TextView userName;
     Button logOut;
     Button infoEdit;
+    Thread logOutThread;
 
     GridView gridView;
     GridAdapter gridAdapter;
     List<String> gridTitle;
     List<Drawable> gridImage;
-    ProgressDialog dialog;
+    ProgressDialog progressDialog;
 
-    // TODO: 2017-05-07 HTTP 통신 전에 반드시 네트워크 체크 과정 넣기 
-    // TODO: 2017-05-07 서버와 통신이 안되는 경우 Connection Time Out 설정 하기 
-    // TODO: 2017-05-13      
+    // TODO: 2017-05-07 서버와 통신이 안되는 경우 Connection Time Out 설정 하기
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,21 +65,63 @@ public class MainSelection extends AppCompatActivity {
         infoEdit = (Button)findViewById(R.id.info_edit);
         name = "이름:"+getIntent().getExtras().getString("user_name");
         driverNum = getIntent().getExtras().getString("driver_num");
-        dialog = new ProgressDialog(MainSelection.this);
+        progressDialog = new ProgressDialog(MainSelection.this);
         userName.setText(name);
+        progressDialog.setMessage("로그 아웃 중입니다.");
+        progressDialog.setCancelable(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+
+        // 로그 아웃을 진행하는 스레드
+        logOutThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url;
+                    url = new URL(HOST_LOGOUT_ADDRESS);
+                    HttpClient httpClient = new DefaultHttpClient();
+                    HttpPost httpPost = new HttpPost();
+                    httpPost.setURI(url.toURI());
+
+                    ArrayList<NameValuePair> post = new ArrayList<>(1);
+                    post.add(new BasicNameValuePair("driver_num", driverNum));
+
+                    httpPost.setEntity(new UrlEncodedFormEntity(post));
+
+                    HttpResponse httpResponse = httpClient.execute(httpPost);
+                    String response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
+                    if(response.equals("Logout")) {
+                        isLogOutFinished = true;
+                    }
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Log.e("error", "" +e );
+                    progressDialog.dismiss();
+                }
+            }
+        });
 
         logOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    while (new LogOut().execute().get()) {
-                        dialog.dismiss();
+                if (NetworkConnection())
+                    try {
+                        progressDialog.show();
+                        logOutThread.start();
+                        logOutThread.join();
+                        if(!isLogOutFinished) {
+                            progressDialog.dismiss();
+                            return;
+                        }
+                        progressDialog.dismiss();
                         finish();
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        Log.e("error",""+e);
+                        progressDialog.dismiss();
                     }
-                }catch (Exception e){
-                    e.printStackTrace();
-                    Log.e("error",""+e);
-                }
+                else
+                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -152,63 +194,9 @@ public class MainSelection extends AppCompatActivity {
 
     }
 
-    private class LogOut extends AsyncTask<Boolean, Void, Boolean>{
-        final String HOST_LOGOUT_ADDRESS ="http://45.32.52.41:5000/logout";
-        URL url;
-
-        public LogOut(){
-            dialog.setMessage("로그 아웃 중입니다.");
-            dialog.setCancelable(false);
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            dialog.show();
-        }
-
-        @Override
-        protected Boolean doInBackground(Boolean... booleen ){
-            try {
-                url = new URL(HOST_LOGOUT_ADDRESS);
-                HttpClient httpClient = new DefaultHttpClient();
-                HttpPost httpPost = new HttpPost();
-                httpPost.setURI(url.toURI());
-
-                ArrayList<NameValuePair> post = new ArrayList<>(1);
-                post.add(new BasicNameValuePair("driver_num", driverNum));
-
-                httpPost.setEntity(new UrlEncodedFormEntity(post));
-
-                HttpResponse httpResponse = httpClient.execute(httpPost);
-                String response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
-                if(response.equals("Logout")) {
-                    isLogOutFinished = true;
-                    return true;
-                }
-
-            }catch (Exception e){
-                e.printStackTrace();
-                Log.e("error", "" +e );
-                dialog.dismiss();
-                return false;
-            }
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean aVoid) {
-            Toast.makeText(getApplicationContext(), "로그 아웃 되었습니다.", Toast.LENGTH_LONG).show();
-            super.onPostExecute(aVoid);
-        }
-    }
-
     @Override
     public void onBackPressed() {
         // 뒤로 가기 눌렀을시
-        super.onBackPressed();
         new AlertDialog.Builder(MainSelection.this)
                 .setTitle("로그아웃")
                 .setMessage("로그아웃 하시겠습니까?")
@@ -221,24 +209,33 @@ public class MainSelection extends AppCompatActivity {
                 .setPositiveButton("예", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        try {
-                            while (new LogOut().execute().get()) {
-                                dialog.dismiss();
+                        if(NetworkConnection()) {
+                            try {
+                                progressDialog.show();
+                                logOutThread.start();
+                                logOutThread.join();
+                                if (!isLogOutFinished) {
+                                    progressDialog.dismiss();
+                                    return;
+                                }
+                                progressDialog.dismiss();
                                 finish();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                Log.e("error", "" + e);
+                                progressDialog.dismiss();
                             }
-                        }catch (Exception e){
-                            e.printStackTrace();
-                            Log.e("error",""+e);
-                        }
+                        }else
+                            Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .show();
+        super.onBackPressed();
     }
 
     @Override
     protected void onDestroy() {
-        // 종료 되기 직전에
-        new LogOut().execute();
+        // TODO: 2017-06-07 종료되기 직전에 로그아웃 구현
         super.onDestroy();
     }
 

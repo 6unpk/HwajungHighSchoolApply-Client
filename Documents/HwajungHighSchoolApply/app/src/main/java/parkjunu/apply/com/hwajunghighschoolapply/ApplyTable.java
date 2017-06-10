@@ -1,6 +1,8 @@
 package parkjunu.apply.com.hwajunghighschoolapply;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -40,7 +42,6 @@ public class ApplyTable extends AppCompatActivity {
     TableLayout.LayoutParams tableParams;
     TableRow.LayoutParams rowParams;
     TableLayout tableRight;
-    TableLayout tableLeft;
     static int driverNum;
     String source;
     Button sendChecked;
@@ -63,45 +64,34 @@ public class ApplyTable extends AppCompatActivity {
         sendChecked.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new SendValue().execute();
+                try {
+                    JSONObject obj = new JSONObject();
+                    int i = 0;
+                    for (CheckboxValue check: checkBoxes){
+                        if(check.checkBox.isChecked())
+                            obj.put("" + i, true);
+                        else
+                            obj.put(""+ i, false);
+                        ++i;
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Log.e("error",""+e);
+                }
+
+                if (NetworkConnection())
+                    new SendValue().execute();
+
+
             }
         });
     }
 
-    public void InitTable(String text1, String text2, String text3){
-        TableRow rowRight = new TableRow(ApplyTable.this);
-        rowRight.setLayoutParams(tableParams);
-
-        TableRow rowLeft = new TableRow(ApplyTable.this);
-        rowLeft.setLayoutParams(tableParams);
-
-        TextView column1 = new TextView(ApplyTable.this);
-        TextView column2 = new TextView(ApplyTable.this);
-        TextView column3 = new TextView(ApplyTable.this);
-
-        column1.setTextSize(16);
-        column2.setTextSize(16);
-        column3.setTextSize(16);
-
-        column1.setText(text1);
-        column2.setText(text2);
-        column3.setText(text3);
-        column1.setLayoutParams(rowParams);
-        column2.setLayoutParams(rowParams);
-        column3.setLayoutParams(rowParams);
-
-        rowLeft.addView(column1);
-        rowRight.addView(column2);
-        rowRight.addView(column3);
-
-
-    }
-
     public class CheckboxValue{
-        public CheckBox checkBox;
-        public int value;
+        CheckBox checkBox;
+        int value;
 
-        public CheckboxValue(CheckBox box, int v){
+        CheckboxValue(CheckBox box, int v){
             checkBox = box;
             value = v;
         }
@@ -112,31 +102,25 @@ public class ApplyTable extends AppCompatActivity {
     public void ConvertSource(String source) {
         try {
             JSONObject jsonObject = new JSONObject(source);
-            ArrayList<JSONObject> first = new ArrayList<>();
-            ArrayList<JSONObject> second = new ArrayList<>();
-            int len;
 
-            String firstColumn = jsonObject.getString("first_column");
-            String secondColumn = jsonObject.getString("second_column");
+            for (int i = 0; i < jsonObject.length(); ++i){
+                JSONObject obj1 = jsonObject.getJSONObject(""+(i+1));
+                JSONObject obj2 = null;
 
-            // 어느 행에 속하는지 분류
-            for(int i = 0; i < jsonObject.length(); ++i){
-                JSONObject obj = jsonObject.getJSONObject(""+(i+1));
-                if(obj.getString("column").equals(firstColumn))
-                    first.add(obj);
-                else
-                    second.add(obj);
-            }
-            // 두개의 행 가운데 요소값이 더 적은 행의 요소 개수를 가져옴
-            len = first.size() > second.size() ? second.size() : first.size();
+                String text1 = obj1.getString("subject");
+                Boolean check1 = obj1.getBoolean("check_box");
+                String value1 = obj1.getString("check_box_value");
 
-            for (int i = 0; i < len; ++i ){
-                String text1 = first.get(i).getString("title");
-                String text2 = first.get(i).getString("title");
-                Boolean check1 = first.get(i).getBoolean("check_box");
-                Boolean check2 = first.get(i).getBoolean("check_box");
-                String value1 = first.get(i).getString("value");
-                String value2 = first.get(i).getString("value");
+                String text2 = "";
+                Boolean check2 = false;
+                String value2 = "";
+
+                if ((++i) < jsonObject.length()){
+                    obj2 = jsonObject.getJSONObject(""+(i+1));
+                    text2 = obj2.getString("subject");
+                    check2 = obj2.getBoolean("check_box");
+                    value2 = obj2.getString("check_box_value");
+                }
                 CreateRow(text1, text2, check1, check2, Integer.parseInt(value1), Integer.parseInt(value2));
 
             }
@@ -252,6 +236,21 @@ public class ApplyTable extends AppCompatActivity {
         tableRow.addView(column2);
         tableRow.addView(checkBox2);
         tableRight.addView(tableRow);
+
+    }
+
+    public boolean NetworkConnection() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        boolean isMobileAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isAvailable();
+        boolean isWifiAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isAvailable();
+
+        boolean isMobileConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
+        boolean isWifiConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+
+        if ((isMobileAvailable && isMobileConnect) || (isWifiAvailable && isWifiConnect))
+            return true;
+        return false;
 
     }
 

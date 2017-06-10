@@ -7,7 +7,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/column1"
         android:padding="4dp"
-        android:textSize="16dp"
-        android:layout_margin="4dp"
+        android:textSize="20dp"
+        android:layout_margin="8dp"
         />
 </LinearLayout>

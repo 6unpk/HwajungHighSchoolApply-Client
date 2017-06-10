@@ -3,6 +3,7 @@ package parkjunu.apply.com.hwajunghighschoolapply;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -50,7 +51,7 @@ public class Apply extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null)
+                if(((SimpleListItem)parent.getAdapter().getItem(position)).getLink() == null || !NetworkConnection())
                     return;
                 new GetTable(((SimpleListItem)parent.getAdapter().getItem(position)).getLink()).execute();
             }
@@ -64,7 +65,7 @@ public class Apply extends AppCompatActivity {
         ProgressDialog progressDialog;
 
         public GetTable(String select){
-            progressDialog = new ProgressDialog(getApplicationContext());
+            progressDialog = new ProgressDialog(Apply.this);
             link = select;
             progressDialog.setMessage("수강신청 정보를 가져오는중 입니다.");
             progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -93,7 +94,7 @@ public class Apply extends AppCompatActivity {
 
                 HttpResponse response = httpClient.execute(httpPost);
                 source = EntityUtils.toString(response.getEntity());
-
+                Log.d("tag", source);
                 if(source.equals("Error"))
                   source = null;
 
@@ -107,6 +108,11 @@ public class Apply extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             progressDialog.dismiss();
+            Intent intent = new Intent(getApplicationContext(), ApplyTable.class);
+            intent.putExtra("driver_num",driverNum);
+            intent.putExtra("source",source);
+            startActivity(intent);
+
             super.onPostExecute(aVoid);
         }
 
@@ -146,14 +152,6 @@ public class Apply extends AppCompatActivity {
                 HttpResponse httpResponse = httpClient.execute(httpPost);
                 response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
                 Log.d("tag", response);
-                JSONObject jsonObject =new JSONObject(response);
-                for(int i = 0; i < jsonObject.length(); ++i){
-                    String link = jsonObject.getJSONObject(""+i).getString("link");
-                    String title = jsonObject.getJSONObject(""+i).getString("title");
-
-                    items.add(new SimpleListItem(title, link));
-                }
-                applyListAdapter.notifyDataSetChanged();
 
             }catch (Exception e){
                 e.printStackTrace();
@@ -170,9 +168,11 @@ public class Apply extends AppCompatActivity {
                 for(int i = 0; i < jsonObject.length(); ++i){
                     String link = jsonObject.getJSONObject(""+(i+1)).getString("link");
                     String title = jsonObject.getJSONObject(""+(i+1)).getString("title");
+                    String term = jsonObject.getJSONObject(""+(i+1)).getString("term");
 
-                    items.add(new SimpleListItem(title, link));
+                    items.add(new SimpleListItem(title + " " + term, link));
                 }
+
                 applyListAdapter.notifyDataSetChanged();
             }catch (Exception e){
                 e.printStackTrace();
@@ -183,5 +183,18 @@ public class Apply extends AppCompatActivity {
         }
     }
 
+    public boolean NetworkConnection() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
+        boolean isMobileAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isAvailable();
+        boolean isWifiAvailable = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isAvailable();
+
+        boolean isMobileConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
+        boolean isWifiConnect = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+
+        if ((isMobileAvailable && isMobileConnect) || (isWifiAvailable && isWifiConnect))
+            return true;
+        return false;
+
+    }
 }

@@ -52,11 +52,7 @@ public class SchoolFoodNotice extends Service {
     public void onCreate() {
         super.onCreate();
         calendar = Calendar.getInstance();
-        if (!NetworkConnection())
-            Toast.makeText(getApplicationContext(),"네트워크에 연결되어 있지 않습니다.", Toast.LENGTH_SHORT).show();
-        else{
-            getTodaySchoolFood();
-        }
+        getTodaySchoolFood();
 
     }
 
@@ -75,6 +71,8 @@ public class SchoolFoodNotice extends Service {
         content = "";
         for (String food: foods)
             content += food + "\n";
+
+        // 급식이 없거나 학교를 안가는날
         if (foods.length < 2)
             content = "오늘은 급식이 없거나 학교를 안가겠죠?";
 
@@ -107,9 +105,8 @@ public class SchoolFoodNotice extends Service {
             int month = calendar.get(Calendar.MONTH) + 1;
             int date = calendar.get(Calendar.DAY_OF_MONTH);
             File file = new File(""+getExternalFilesDir(null) +"/SchoolFood.txt");
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            // SchoolFood.txt 파일이 존재 하지 않는 경우
 
+            // SchoolFood.txt 파일이 존재 하지 않는 경우
             if(!file.exists()){
                 Log.e("error", "SchoolFood.txt does not exist!");
                 if (NetworkConnection())
@@ -119,8 +116,9 @@ public class SchoolFoodNotice extends Service {
                 return null;
             }
 
-
             // SchoolFood.txt 를 읽어 온다.
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+
             String line;
             String source = "";
             while((line = reader.readLine()) != null)

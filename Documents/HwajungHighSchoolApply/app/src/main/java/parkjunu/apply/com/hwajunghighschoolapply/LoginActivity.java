@@ -70,6 +70,7 @@ public class LoginActivity extends AppCompatActivity {
     CheckBox saveLogin;
     ImageView Hwajung;
     TextView Developer;
+    boolean isLoginSuc = false;
 
     SharedPreferences pref;
     SharedPreferences.Editor editor;
@@ -90,6 +91,7 @@ public class LoginActivity extends AppCompatActivity {
             new AlertDialog.Builder(LoginActivity.this).
                     setTitle("주의 사항").
                     setMessage("본 어플은 PC 버전 수강신청 사이트보다 다소 느릴 수 있습니다.").
+                    setCancelable(false).
                     setPositiveButton("확인", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -125,7 +127,6 @@ public class LoginActivity extends AppCompatActivity {
             User_ID.setText(pref.getString("id",""));
             Password.setText(pref.getString("pw",""));
         }
-
 
 
 
@@ -168,6 +169,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void executeLogin(){
+
         if (!NetworkConnection()) {
             Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
             return;
@@ -242,6 +244,7 @@ public class LoginActivity extends AppCompatActivity {
                     httpResponse = httpClient.execute(httpPost);
                     response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
 
+                    isLoginSuc = true;
                     dialog.cancel();
                     dialog.dismiss();
                     // 여기서 response 는 서버로 부터 받는 유저 이름값
@@ -257,10 +260,7 @@ public class LoginActivity extends AppCompatActivity {
                     // 로그인 실패시
                     dialog.cancel();
                     dialog.dismiss();
-                    Toast fail = new Toast(getApplicationContext());
-                    fail.setText("로그인에 실패했습니다.");
-                    fail.setDuration(Toast.LENGTH_LONG);
-                    fail.show();
+                   isLoginSuc = false;
                 }
 
             }catch (Exception e){
@@ -273,15 +273,19 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
+            if(!isLoginSuc)
+               Toast.makeText(getApplicationContext(), "로그인에 실패했습니다.", Toast.LENGTH_LONG).show();
+            isLoginSuc = false;
             super.onPostExecute(aVoid);
         }
     }
 
     public void PermissionRequest(){
         int permissionWrite = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if(permissionWrite == PackageManager.PERMISSION_DENIED && Build.VERSION.SDK_INT > 23){
+        if(permissionWrite == PackageManager.PERMISSION_DENIED && Build.VERSION.SDK_INT >= 23){
             new AlertDialog.Builder(LoginActivity.this)
                     .setTitle("권한 설정")
+                    .setCancelable(false)
                     .setMessage("급식 알리미를 사용하기 위해서는 권한을 반드시 체크해주세요!")
                     .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                         @Override
