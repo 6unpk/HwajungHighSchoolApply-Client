@@ -6,16 +6,23 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -37,21 +44,32 @@ import org.apache.http.util.EntityUtils;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class MainSelection extends AppCompatActivity {
     static String name;
     static String driverNum;
+
+    static final String HOST_LOGOUT_ADDRESS ="http://45.32.52.41:5000/logout";
+    static final String HOST_GET_APPY_COUNT ="http://45.32.52.41:5000/get_apply_count";
+
+    int colors[] = new int[5];
+    int background[] = new int[7];
     Boolean isLogOutFinished = false;
-    final String HOST_LOGOUT_ADDRESS ="http://45.32.52.41:5000/logout";
-    TextView userName;
-    Button logOut;
+
+    RecyclerView recyclerView;
+    RecyclerView.LayoutManager layoutManager;
+    RecyclerAdapter adapter;
+    RecyclerAdapter.MyClickListener listener;
+    ArrayList<Object> cardItems = new ArrayList<>();
+    TextView title;
+    TextView sub;
+    int clickCount = 0;
+    int applyCount = 0;
     Button infoEdit;
+
     Thread logOutThread;
 
-    GridView gridView;
-    GridAdapter gridAdapter;
-    List<String> gridTitle;
-    List<Drawable> gridImage;
     ProgressDialog progressDialog;
 
     // TODO: 2017-05-07 서버와 통신이 안되는 경우 Connection Time Out 설정 하기
@@ -60,13 +78,138 @@ public class MainSelection extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_selection);
-        userName = (TextView)findViewById(R.id.user_name);
-        logOut = (Button)findViewById(R.id.logout);
-        infoEdit = (Button)findViewById(R.id.info_edit);
-        name = "이름:"+getIntent().getExtras().getString("user_name");
+        //userName = (TextView)findViewById(R.id.user_name);
+        //logOut = (Button)findViewById(R.id.logout);
+        //infoEdit = (Button)findViewById(R.id.info_edit);
+
         driverNum = getIntent().getExtras().getString("driver_num");
+        Typeface font= Typeface.createFromAsset(getAssets(),"aritta.ttf");
+        recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+        adapter = new RecyclerAdapter(cardItems, MainSelection.this);
+        layoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);
+        recyclerView.setLayoutManager(layoutManager);
+        listener = new RecyclerAdapter.MyClickListener() {
+            @Override
+            public void onItemClick(int position, View v) {
+                switch(position){
+                    // case0: 프로필
+                    case 0:
+                        if(clickCount == 0)
+                            Toast.makeText(getApplicationContext(),"한번 더 누르면 로그아웃 됩니다.",Toast.LENGTH_SHORT).show();
+                        clickCount++;
+                        v.findViewById(R.id.log_out).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (NetworkConnection())
+                                    try {
+                                        progressDialog.show();
+                                        logOutThread.start();
+                                        logOutThread.join();
+                                        if(!isLogOutFinished) {
+                                            progressDialog.dismiss();
+                                            return;
+                                        }
+                                        progressDialog.dismiss();
+                                        finish();
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                        Log.e("error",""+e);
+                                        progressDialog.dismiss();
+                                    }
+                                else
+                                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        break;
+                    case 1:
+                        Intent intent1 =new Intent(getApplicationContext(), Apply.class);
+                        intent1.putExtra("driver_num", driverNum);
+                        startActivity(intent1);
+                        break;
+                    case 2:
+                        Intent intent2 =new Intent(getApplicationContext(), AfterApply.class);
+                        intent2.putExtra("driver_num", driverNum);
+                        startActivity(intent2);
+                        break;
+                    // case3: 방과후 수강신청
+                    case 3:
+
+                        break;
+
+                    case 4:
+
+                        break;
+                    case 5:
+                        Intent intent3 =new Intent(getApplicationContext(), ApplyHistory.class);
+                        intent3.putExtra("driver_num", driverNum);
+                        startActivity(intent3);
+                        break;
+                    case 6:
+                        Intent intent4 =new Intent(getApplicationContext(), AfterApplyHistory.class);
+                        intent4.putExtra("driver_num", driverNum);
+                        startActivity(intent4);
+                        break;
+
+                    case 7:
+                    Intent intent5 =new Intent(getApplicationContext(), SettingActivity.class);
+                        startActivity(intent5);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        };
+
+        adapter.setOnItemClickListener(listener);
+
+        colors[0] = getResources().getColor(R.color.card1);
+        colors[1] = getResources().getColor(R.color.card2);
+        colors[2] = getResources().getColor(R.color.card3);
+        colors[3] = getResources().getColor(R.color.card4);
+        colors[4] = getResources().getColor(R.color.card5);
+        Random random = new Random();
+        for(int i =0; i < 5; ++i)
+            background[i] = colors[random.nextInt(5)];
+        for(int i =0; i < 4; ++i)
+            for(int j =i+1; j < 5; ++j){
+                while (background[i] == background[j])
+                    background[j] = colors[random.nextInt(5)];
+            }
+
+        title = (TextView) findViewById(R.id.title);
+        sub = (TextView) findViewById(R.id.sub);
+        title.setTypeface(font);
+        sub.setTypeface(font);
+        Animation animation = AnimationUtils.loadAnimation(this, R.anim.fade);
+        title.startAnimation(animation);
+        sub.startAnimation(animation);
+
+        name = getIntent().getExtras().getString("user_name");
+        try {
+            applyCount = new GetCount().execute().get();
+        }catch (Exception e){
+
+        }
+        cardItems.add(new CardProfileItem(getResources().getDrawable(R.drawable.apply), name));
+        cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.apply),"수강 신청", background[0]));
+        cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.after_apply),"방과후 수강 신청", background[1]));
+        cardItems.add(new CardStringItem("수강신청 1.0","",background[0], background[3]));
+        cardItems.add(new CardStringItem("진행중인 수강신청",applyCount+"개",applyCount,background[0], background[3]));
+        cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.apply_history),"수강 신청 목록", background[2]));
+        cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.after_apply_history),"방과후 수강 신청 목록", background[3]));
+        cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.setting2),"설정", background[4]));
+        cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.info2),"공지 사항", background[0]));
+
+        adapter.notifyDataSetChanged();
+        recyclerView.setAdapter(adapter);
+
+
+        //name = "이름:"+getIntent().getExtras().getString("user_name");
+        //driverNum = getIntent().getExtras().getString("driver_num");
         progressDialog = new ProgressDialog(MainSelection.this);
-        userName.setText(name);
+        //userName.setText(name);
         progressDialog.setMessage("로그 아웃 중입니다.");
         progressDialog.setCancelable(false);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -101,97 +244,57 @@ public class MainSelection extends AppCompatActivity {
             }
         });
 
-        logOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (NetworkConnection())
-                    try {
-                        progressDialog.show();
-                        logOutThread.start();
-                        logOutThread.join();
-                        if(!isLogOutFinished) {
-                            progressDialog.dismiss();
-                            return;
-                        }
-                        progressDialog.dismiss();
-                        finish();
-                    }catch (Exception e){
-                        e.printStackTrace();
-                        Log.e("error",""+e);
-                        progressDialog.dismiss();
-                    }
-                else
-                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
+    }
+
+    private class GetCount extends AsyncTask<Void, Void, Integer>{
+        ProgressDialog dialog;
+        URL url;
+        GetCount(){
+            dialog = new ProgressDialog(MainSelection.this);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.setMessage("정보를 가져오는 중입니다.");
+            dialog.setCancelable(false);
+            dialog.show();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            try {
+
+                url = new URL(HOST_GET_APPY_COUNT);
+                HttpClient httpClient = new DefaultHttpClient();
+                HttpPost httpPost = new HttpPost();
+                httpPost.setURI(url.toURI());
+
+                ArrayList<BasicNameValuePair> post = new ArrayList<>();
+
+                post.add(new BasicNameValuePair("driver_num",driverNum));
+
+                httpPost.setEntity(new UrlEncodedFormEntity(post, HTTP.UTF_8));
+
+                HttpResponse httpResponse = httpClient.execute(httpPost);
+
+                String response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
+
+                return Integer.parseInt(response);
+
+            }catch (Exception e){
+                e.printStackTrace();
+                Log.e("error","");
+                return 0;
             }
-        });
+        }
 
-        gridTitle = new ArrayList<>();
-        gridImage = new ArrayList<>();
-        gridTitle.add("수강신청");
-        gridTitle.add("방과후 수강신청");
-        gridTitle.add("수강신청 내역");
-        gridTitle.add("방과후 수강신청 내역");
-        gridTitle.add("공지사항");
-        gridTitle.add("설정");
-
-        gridImage.add(getResources().getDrawable(R.drawable.apply));
-        gridImage.add(getResources().getDrawable(R.drawable.apply));
-        gridImage.add(getResources().getDrawable(R.drawable.apply_history));
-        gridImage.add(getResources().getDrawable(R.drawable.apply_history));
-        gridImage.add(getResources().getDrawable(R.drawable.notice));
-        gridImage.add(getResources().getDrawable(R.drawable.setting));
-
-
-        gridView = (GridView)findViewById(R.id.grid);
-        gridAdapter = new GridAdapter(this);
-        gridView.setAdapter(gridAdapter);
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (!NetworkConnection()){
-                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                switch (position){
-                    case 0:
-                        // 수강신청
-                        Intent apply = new Intent(getApplicationContext(), Apply.class);
-                        apply.putExtra("driver_num", driverNum);
-                        startActivity(apply);
-                        break;
-                    case 1:
-                        // 방과후 수강신청
-                        Intent afterApply = new Intent(getApplicationContext(), AfterApply.class);
-                        afterApply.putExtra("driver_num", driverNum);
-                        startActivity(afterApply);
-                        break;
-                    case 2:
-                        // 수강신청 내역
-                        Intent applyHis = new Intent(getApplicationContext(), ApplyHistory.class);
-                        applyHis.putExtra("driver_num", driverNum);
-                        startActivity(applyHis);
-                        break;
-                    case 3:
-                        // 방과후 수강신청 내역
-                        Intent afterApplyHis = new Intent(getApplicationContext(), AfterApplyHistory.class);
-                        afterApplyHis.putExtra("driver_num", driverNum);
-                        startActivity(afterApplyHis);
-                        break;
-                    case 4:
-                        // 공지사항
-                        break;
-                    case 5:
-                        // 설정
-                        Intent setting = new Intent(getApplicationContext(), SettingActivity.class);
-                        startActivity(setting);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-
+        @Override
+        protected void onPostExecute(Integer aVoid) {
+            dialog.dismiss();
+            super.onPostExecute(aVoid);
+        }
     }
 
     @Override
@@ -219,6 +322,7 @@ public class MainSelection extends AppCompatActivity {
                                     return;
                                 }
                                 progressDialog.dismiss();
+                                setResult(100);
                                 finish();
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -230,7 +334,7 @@ public class MainSelection extends AppCompatActivity {
                     }
                 })
                 .show();
-        super.onBackPressed();
+
     }
 
     @Override
@@ -239,88 +343,6 @@ public class MainSelection extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public class GridAdapter extends BaseAdapter {
-        LayoutInflater inflater;
-
-        public GridAdapter(Context context){
-            inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        }
-
-        @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            if(convertView == null)
-                convertView = inflater.inflate(R.layout.grid_item, parent, false);
-
-            ImageView imageView = (ImageView)convertView.findViewById(R.id.grid_image);
-            TextView textView = (TextView)convertView.findViewById(R.id.grid_text);
-            imageView.setImageDrawable(gridImage.get(position));
-            textView.setText(gridTitle.get(position));
-
-            imageView.setOnClickListener(new Button.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (!NetworkConnection()){
-                        Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    switch (position){
-                        case 0:
-                            // 수강신청
-                            Intent apply = new Intent(getApplicationContext(), Apply.class);
-                            apply.putExtra("driver_num", driverNum);
-                            startActivity(apply);
-                            break;
-                        case 1:
-                            // 방과후 수강신청
-                            Intent afterApply = new Intent(getApplicationContext(), AfterApply.class);
-                            afterApply.putExtra("driver_num", driverNum);
-                            startActivity(afterApply);
-                            break;
-                        case 2:
-                            // 수강신청 내역
-                            Intent applyHis = new Intent(getApplicationContext(), ApplyHistory.class);
-                            applyHis.putExtra("driver_num", driverNum);
-                            startActivity(applyHis);
-                            break;
-                        case 3:
-                            // 방과후 수강신청 내역
-                            Intent afterApplyHis = new Intent(getApplicationContext(), AfterApplyHistory.class);
-                            afterApplyHis.putExtra("driver_num", driverNum);
-                            startActivity(afterApplyHis);
-                            break;
-                        case 4:
-                            // 공지사항
-                            break;
-                        case 5:
-                            // 설정
-                            Intent setting = new Intent(getApplicationContext(), SettingActivity.class);
-                            startActivity(setting);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            });
-
-            return convertView;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return gridTitle.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return gridTitle.size();
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-    }
 
     public boolean NetworkConnection() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);

@@ -7,4 +7,10 @@
     <color name="white">#FFFFFF</color>
     <color name="textColor">#595241</color>
     <color name="divide">#b8ae9c</color>
+
+    <color name="card1">#2f343b</color>
+    <color name="card2">#7e827a</color>
+    <color name="card3">#e3cd4a</color>
+    <color name="card4">#c77966</color>
+    <color name="card5">#703030</color>
 </resources>

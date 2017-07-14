@@ -3,19 +3,17 @@ package parkjunu.apply.com.hwajunghighschoolapply;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -33,29 +31,93 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 
-// Setting Activity 에서 호출하는 Service
-public class SchoolFoodNotice extends Service {
+import static java.lang.System.currentTimeMillis;
 
-    static final String HOST_ADDRESS_SCHOOL_FOOD = "http://45.32.52.41:5000/get_school_food";
+// 급식을 가져오는 Service Component
+public class SchoolFood extends Service implements Runnable{
+    SharedPreferences pref;
+    SharedPreferences.Editor editor;
     Calendar calendar;
     String source;
-
-    public SchoolFoodNotice(){
-    }
+    static final String HOST_ADDRESS_SCHOOL_FOOD = "http://45.32.52.41:5000/get_school_food";
 
     @Override
     public void onCreate() {
-        super.onCreate();
+        pref = PreferenceManager.getDefaultSharedPreferences(SchoolFood.this);
+        editor= pref.edit();
         calendar = Calendar.getInstance();
-        getTodaySchoolFood();
+        if (NetworkConnection())
+            new GetSchoolFood().execute();
+        Thread thread = new Thread(this);
+        thread.start();
+        Thread date = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+                    try{
+                        calendar = Calendar.getInstance();
+                        int date = calendar.get(Calendar.DAY_OF_MONTH);
+                        if(date == 1 && NetworkConnection())
+                            new GetSchoolFood().execute();
+                        Thread.sleep(3600*6000); // 6시간에 한번
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        Log.e("error", ""+e);
+                    }
+                }
+            }
+        });
+       date.start();
 
     }
+
+    // 매 시간을 확인해 급식을 가져온다.
+
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void run() {
+        while(true) {
+                    try {
+                        // 1초 마다 시간을 확인하고 사용자가 설정한 시간에 맞춰 급식표를 가져온다.
+                        calendar = new GregorianCalendar();
+
+                        int second = calendar.get(Calendar.SECOND);
+                        int minute = calendar.get(Calendar.MINUTE);
+                        int hour =  calendar.get(Calendar.HOUR_OF_DAY);
+                        int userSetSec = pref.getInt("sec", 0);
+                        int userSetMin = pref.getInt("min", 0);
+                        int userSetHour = pref.getInt("hour", 11);
+
+                        if(second == userSetSec && minute == userSetMin && userSetHour == hour){
+                            getTodaySchoolFood();
+                            Thread.sleep(1000);
+                        }
+
+                        Thread.sleep(1000);
+                        calendar.clear();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Log.e("error", "" + e);
+                        break;
+                    }
+                }
+    }
+
 
 
     public void CallNotification(String content){
@@ -68,14 +130,12 @@ public class SchoolFoodNotice extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 ,notification, PendingIntent.FLAG_UPDATE_CURRENT);
 
         String foods[] = content.split(":");
-
         content = "";
         for (String food: foods)
             content += food + "\n";
-
-        // 급식이 없거나 학교를 안가는날
+        // 자동 급식 알리미는 급식이 없는 날의 경우 알림을 띄우지 않는다.
         if (foods.length < 2)
-            content = "오늘은 급식이 없거나 학교를 안가겠죠?";
+            return;
 
         String title =""+ month +"월 "+ today +"일 급식 알리미";
         builder.setContentTitle(title).
@@ -96,6 +156,7 @@ public class SchoolFoodNotice extends Service {
 
         NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());
+        stopSelf();
 
     }
 
@@ -106,12 +167,12 @@ public class SchoolFoodNotice extends Service {
             File file = new File(""+getExternalFilesDir(null) +"/SchoolFood.txt");
 
             // SchoolFood.txt 파일이 존재 하지 않는 경우
-            if(!file.exists()){
+            if(!file.exists()) {
                 Log.e("error", "SchoolFood.txt does not exist!");
                 if (NetworkConnection())
                     new GetSchoolFood().execute().get();
                 else {
-                    Toast.makeText(SchoolFoodNotice.this, "네트워크에 연결되어있지않아 \n 급식정보를 가져오지 못했습니다.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(SchoolFood.this, "네트워크에 연결되어있지않아 \n 급식정보를 가져오지 못했습니다.", Toast.LENGTH_LONG).show();
                     return;
                 }
             }
@@ -142,27 +203,20 @@ public class SchoolFoodNotice extends Service {
 
         }catch (Exception e){
             e.printStackTrace();
-            Toast.makeText(SchoolFoodNotice.this, "급식을 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(SchoolFood.this, "급식을 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show();
             Log.e("error", "" +e);
         }
-        stopSelf();
+
     }
 
-    private class GetSchoolFood extends AsyncTask<Void, Void, Void> {
+    private class GetSchoolFood extends AsyncTask<Void, Void, Void>{
         URL url;
-        ProgressDialog dialog;
-
         public GetSchoolFood(){
-            dialog = new ProgressDialog(SchoolFoodNotice.this);
-            dialog.setMessage("급식 정보를 불러오는 중입니다.");
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            dialog.setCancelable(false);
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            dialog.show();
         }
 
         @Override
@@ -199,9 +253,13 @@ public class SchoolFoodNotice extends Service {
                 e.printStackTrace();
                 Log.e("error", ""+e);
             }
-            dialog.dismiss();
 
         }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     public boolean NetworkConnection() {
@@ -219,10 +277,4 @@ public class SchoolFoodNotice extends Service {
 
     }
 
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
 }

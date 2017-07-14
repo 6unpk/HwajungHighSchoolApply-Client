@@ -5,122 +5,42 @@
     android:id="@+id/activity_main_selection"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:background="@color/background"
+    android:background="#FFFFFF"
     tools:context="parkjunu.apply.com.hwajunghighschoolapply.MainSelection">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/info"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/divide"
-            />
-
         <LinearLayout
+            android:id="@+id/top_bar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/user_name"
-                android:textSize="15dp"
-                android:text="이름"
-                android:padding="8dp"/>
+            android:layout_height="wrap_content">
+                <TextView
+                    android:paddingTop="36dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:layout_gravity="start|bottom"
+                    android:layout_margin="8dp"
+                    android:text="화정고 수강신청"
+                    android:paddingStart="16dp"
+                    android:paddingLeft="16dp"
+                    android:id="@+id/title"
+                    android:textSize="28dp"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:weightSum="6"
-                android:orientation="horizontal">
-                <Button
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:layout_weight="1"
-                    />
-                <info.hoang8f.widget.FButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/info_edit"
-                    android:padding="6dp"
-                    android:layout_marginRight="6dp"
-                    android:textColor="@color/divide"
-                    app:buttonColor="@color/colorPrimaryDark"
-                    app:shadowHeight="0dp"
-                    app:cornerRadius="2dp"
-                    android:textSize="14dp"
-                    android:layout_weight="1"
-                    android:text="정보수정"/>
-                <info.hoang8f.widget.FButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/logout"
-                    app:shadowHeight="0dp"
-                    app:cornerRadius="2dp"
-                    app:buttonColor="@color/colorPrimaryDark"
-                    android:textColor="@color/divide"
-                    android:padding="6dp"
-                    android:layout_weight="1"
-                    android:textSize="14dp"
-                    android:layout_marginLeft="6dp"
-                    android:text="로그아웃"/>
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:layout_weight="1"
-                    android:visibility="gone"
-                    />
-            </LinearLayout>
+                    android:id="@+id/sub"
+                    android:text="모바일 ver."
+                    android:textSize="12dp"
+                    android:layout_gravity="end|bottom"/>
+
         </LinearLayout>
-
-        <View
+        <android.support.v7.widget.RecyclerView
+            android:layout_below="@+id/top_bar"
+            android:id="@+id/recycler_view"
             android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/divide"
-            />
+            android:layout_height="match_parent">
 
-    </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/divide"
-            />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_below="@+id/info">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="15dp"
-            android:padding="4dp"/>
-
-        <GridView
-            android:id="@+id/grid"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:horizontalSpacing="10dp"
-            android:verticalSpacing="10dp"
-            android:numColumns="auto_fit"/>
+        </android.support.v7.widget.RecyclerView>
 
 
-    </LinearLayout>
 </RelativeLayout>

@@ -36,6 +36,7 @@ import android.widget.Toast;
 
 import com.cengalabs.flatui.views.FlatEditText;
 import com.melnykov.fab.FloatingActionButton;
+import com.rengwuxian.materialedittext.MaterialEditText;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -62,8 +63,9 @@ public class LoginActivity extends AppCompatActivity {
 
     static final String HOST_ADDRESS = "http://45.32.52.41:5000";
     static final String HOST_GET_NAME_ADDRESS ="http://45.32.52.41:5000/get_name";
-    FlatEditText User_ID;
-    FlatEditText Password;
+
+    MaterialEditText User_ID;
+    MaterialEditText Password;
     FloatingActionButton actionButton;
     Button submitButton;
     Button pwFindButton;
@@ -103,8 +105,8 @@ public class LoginActivity extends AppCompatActivity {
         Animation animation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade);
         animation.setFillAfter(true);
 
-        User_ID = (FlatEditText) findViewById(R.id.user_id);
-        Password = (FlatEditText) findViewById(R.id.password);
+        User_ID = (MaterialEditText) findViewById(R.id.user_id);
+        Password = (MaterialEditText) findViewById(R.id.password);
         submitButton = (Button) findViewById(R.id.submit);
         pwFindButton = (Button) findViewById(R.id.password_find);
         saveLogin = (CheckBox) findViewById(R.id.save_login);
@@ -169,7 +171,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void executeLogin(){
-
         if (!NetworkConnection()) {
             Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해주세요.", Toast.LENGTH_SHORT).show();
             return;
@@ -187,8 +188,10 @@ public class LoginActivity extends AppCompatActivity {
     private class SendPost extends AsyncTask<Void, Void, Void>{
         private String id, password;
         private String response;
+        private String reponse2;
         Boolean isCheck;
         URL url;
+        URL url2;
         ProgressDialog dialog = new ProgressDialog(LoginActivity.this);
 
         public SendPost(String id, String password){
@@ -280,6 +283,9 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+
+
+    // 초기 앱 실행시 권한 요청
     public void PermissionRequest(){
         int permissionWrite = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if(permissionWrite == PackageManager.PERMISSION_DENIED && Build.VERSION.SDK_INT >= 23){
@@ -302,6 +308,23 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         return super.onTouchEvent(event);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (resultCode){
+            case 100:
+                if(pref.getBoolean("save_login", false)) {
+                    User_ID.setText(pref.getString("id", ""));
+                    Password.setText(pref.getString("pw", ""));
+                }
+
+                break;
+            default:
+
+                break;
+        }
     }
 
     public boolean NetworkConnection() {

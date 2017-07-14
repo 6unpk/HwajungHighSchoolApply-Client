@@ -22,7 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainSelection" />
+        <activity android:name=".MainSelection"/>
         <activity android:name=".Apply" />
         <activity android:name=".ApplyHistory" />
         <activity android:name=".SettingActivity" />
@@ -42,6 +42,10 @@
             android:name=".SchoolFoodNotice"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name=".PersistentService"
+            android:enabled="true"
+            android:exported="true"/>
 
         <receiver android:name=".BootingSensor">
             <intent-filter>
@@ -51,10 +55,6 @@
 
         <activity android:name=".Developer_info" />
 
-        <service
-            android:name=".PersistentService"
-            android:enabled="true"
-            android:exported="true"></service>
     </application>
 
 </manifest>
