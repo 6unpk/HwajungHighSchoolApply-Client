@@ -47,6 +47,7 @@ public class ApplyTable extends AppCompatActivity {
     static String driverNum;
     String source;
     Button sendChecked;
+    Button refresh;
     ArrayList<CheckboxValue> checkBoxes = new ArrayList<>();
 
     @Override
@@ -62,6 +63,7 @@ public class ApplyTable extends AppCompatActivity {
         // tablelayout 을 linearlayout 처럼 사용
         ConvertSource(getIntent().getExtras().getString("source"));
         sendChecked = (Button)findViewById(R.id.submit);
+        refresh = (Button)findViewById(R.id.refresh);
 
         sendChecked.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -232,11 +234,15 @@ public class ApplyTable extends AppCompatActivity {
         column1.setTextSize(16);
         column1.setText(text1);
         column1.setLayoutParams(rowParams);
+        column1.setPadding(16, 16, 16, 16);
+        column1.setBackground(getResources().getDrawable(R.drawable.border));
         checkBox1.setLayoutParams(rowParams);
 
         column2.setTextSize(16);
         column2.setText(text2);
         column2.setLayoutParams(rowParams);
+        column2.setPadding(16, 16, 16, 16);
+        column2.setBackground(getResources().getDrawable(R.drawable.border));
         checkBox2.setLayoutParams(rowParams);
 
         if(!isCheckExist1)

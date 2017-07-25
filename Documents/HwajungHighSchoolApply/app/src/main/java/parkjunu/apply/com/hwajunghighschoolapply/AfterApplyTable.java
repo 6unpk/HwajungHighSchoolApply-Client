@@ -41,6 +41,7 @@ public class AfterApplyTable extends AppCompatActivity {
     static String driverNum;
     String source;
     Button sendChecked;
+    Button refresh;
 
     // 현재 체크 박스 저장 값
     ArrayList<CheckboxValue> checkBoxes = new ArrayList<>();
@@ -55,6 +56,7 @@ public class AfterApplyTable extends AppCompatActivity {
 
         driverNum = getIntent().getExtras().getString("driver_num");
         source = getIntent().getExtras().getString("source");
+
         table = (TableLayout)findViewById(R.id.table);
         // 각 레이아웃의 width 와 height 값을 Param 값에 담아 설정
         tableParams = new TableLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -62,6 +64,8 @@ public class AfterApplyTable extends AppCompatActivity {
         // tablelayout 을 linearlayout 처럼 사용
         ConvertSource(source);
         sendChecked = (Button)findViewById(R.id.submit);
+        refresh = (Button)findViewById(R.id.refresh);
+
         sendChecked.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -199,6 +203,7 @@ public class AfterApplyTable extends AppCompatActivity {
 
     }
 
+
     public class CheckboxValue{
         CheckBox checkBox;
         String value;
@@ -209,6 +214,7 @@ public class AfterApplyTable extends AppCompatActivity {
         }
 
     }
+
 
     public void CreateRow(ArrayList<JSONObject> row){
         TableRow tableRow = new TableRow(this);
@@ -224,6 +230,8 @@ public class AfterApplyTable extends AppCompatActivity {
                 column1.setTextSize(18);
                 column1.setText(obj.getString("subject"));
                 column1.setLayoutParams(rowParams);
+                column1.setPadding(16,16,16,16);
+                column1.setBackground(getResources().getDrawable(R.drawable.border));
                 checkBox1.setLayoutParams(rowParams);
 
                 tableRow.addView(column1);
@@ -234,6 +242,7 @@ public class AfterApplyTable extends AppCompatActivity {
                     firstValue.add(false);
                 if(obj.getBoolean("check_box"))
                     tableRow.addView(checkBox1);
+
             }
             table.addView(tableRow);
         }
@@ -243,6 +252,7 @@ public class AfterApplyTable extends AppCompatActivity {
         }
 
     }
+
 
     public boolean NetworkConnection() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);

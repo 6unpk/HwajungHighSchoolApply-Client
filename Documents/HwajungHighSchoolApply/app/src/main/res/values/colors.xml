@@ -13,4 +13,6 @@
     <color name="card3">#e3cd4a</color>
     <color name="card4">#c77966</color>
     <color name="card5">#703030</color>
+
+    <color name="cardBackground">#FCFFF5</color>
 </resources>

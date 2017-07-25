@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_after_apply_history_table"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     android:background="@color/white"
     tools:context="parkjunu.apply.com.hwajunghighschoolapply.AfterApplyHistoryTable">
 
@@ -16,34 +15,63 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         >
-        <LinearLayout
+
+
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="right">
-            <TextView
-                android:layout_width="wrap_content"
+            android:layout_margin="8dp"
+            card_view:cardCornerRadius="6dp"
+            android:background="@color/cardBackground"
+            >
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text=""/>
+                android:gravity="right">
 
-            <com.cengalabs.flatui.views.FlatButton
-                android:id="@+id/submit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="저장하기"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""/>
 
-        </LinearLayout>
-        <HorizontalScrollView
+                <info.hoang8f.widget.FButton
+                    android:layout_margin="4dp"
+                    android:id="@+id/refresh"
+                    app:buttonColor="@color/background"
+                    app:shadowHeight="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="새로 고침"
+                    />
+
+            </LinearLayout>
+        </android.support.v7.widget.CardView>
+
+        <android.support.v7.widget.CardView
+            android:layout_margin="8dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-        <TableLayout
-            android:padding="4dp"
-            android:id="@+id/table"
-            android:color ="#d1dbdd"
-            android:stretchColumns="*"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
-        </HorizontalScrollView>
+            android:layout_height="wrap_content"
+            android:background="@color/cardBackground"
+            card_view:cardCornerRadius="6dp"
+            android:layout_gravity="center"
+            >
+            <HorizontalScrollView
+                android:layout_margin="4dp"
+                android:layout_width="match_parent"
+                android:layout_gravity="center"
+                android:layout_height="match_parent">
+                <TableLayout
+                    android:id="@+id/table"
+                    android:color ="#d1dbdd"
+                    android:layout_gravity="center"
+                    android:stretchColumns="*"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    >
+                </TableLayout>
+
+            </HorizontalScrollView>
+        </android.support.v7.widget.CardView>
     </LinearLayout>
 
 </RelativeLayout>

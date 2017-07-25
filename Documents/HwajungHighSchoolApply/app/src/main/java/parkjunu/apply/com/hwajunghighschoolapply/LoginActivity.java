@@ -83,6 +83,8 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         startService(new Intent(getApplicationContext(), SchoolFood.class));
         startActivity(new Intent(getApplicationContext(), Splash.class));
+        startActivity(new Intent(getApplicationContext(), AfterApplyTable.class));
+
         pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = pref.edit();
 

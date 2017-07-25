@@ -100,11 +100,15 @@ public class ApplyHistoryTable extends AppCompatActivity {
         column1.setTextSize(16);
         column1.setText(text1);
         column1.setLayoutParams(rowParams);
+        column1.setPadding(16, 16, 16, 16);
+        column1.setBackground(getResources().getDrawable(R.drawable.border));
         checkBox1.setLayoutParams(rowParams);
 
         column2.setTextSize(16);
         column2.setText(text2);
         column2.setLayoutParams(rowParams);
+        column2.setPadding(16, 16, 16, 16);
+        column2.setBackground(getResources().getDrawable(R.drawable.border));
         checkBox2.setLayoutParams(rowParams);
 
         if(!isCheckExist1) {

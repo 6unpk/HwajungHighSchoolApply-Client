@@ -36,6 +36,7 @@ public class AfterApplyHistoryTable extends AppCompatActivity {
 
     }
 
+
     public void ConvertSource(String source){
         try{
             JSONObject jsonObject = new JSONObject(source);
@@ -54,16 +55,19 @@ public class AfterApplyHistoryTable extends AppCompatActivity {
 
     }
 
+
     public void CreateRow(ArrayList<String> row){
         TableRow tableRow = new TableRow(AfterApplyHistoryTable.this);
         tableRow.setLayoutParams(rowParams);
 
         for(String str: row){
-            TextView textView = new TextView(AfterApplyHistoryTable.this);
-            textView.setTextSize(18);
-            textView.setLayoutParams(rowParams);
-            textView.setText(str);
-            tableRow.addView(textView);
+            TextView column1 = new TextView(AfterApplyHistoryTable.this);
+            column1.setTextSize(18);
+            column1.setLayoutParams(rowParams);
+            column1.setPadding(16, 16, 16, 16);
+            column1.setBackground(getResources().getDrawable(R.drawable.border));
+            column1.setText(str);
+            tableRow.addView(column1);
         }
         table.addView(tableRow);
     }
