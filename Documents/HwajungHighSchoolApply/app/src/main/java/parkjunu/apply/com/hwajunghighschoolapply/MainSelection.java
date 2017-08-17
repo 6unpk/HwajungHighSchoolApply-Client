@@ -4,30 +4,23 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
+
 import android.widget.Button;
-import android.widget.GridView;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,9 +42,11 @@ import java.util.Random;
 public class MainSelection extends AppCompatActivity {
     static String name;
     static String driverNum;
+    static int logOutCount = 0;
 
     static final String HOST_LOGOUT_ADDRESS ="http://45.32.52.41:5000/logout";
-    static final String HOST_GET_APPY_COUNT ="http://45.32.52.41:5000/get_apply_count";
+    static final String HOST_GET_APPLY_COUNT ="http://45.32.52.41:5000/get_apply_count";
+
 
     int colors[] = new int[5];
     int background[] = new int[7];
@@ -61,14 +56,16 @@ public class MainSelection extends AppCompatActivity {
     RecyclerView.LayoutManager layoutManager;
     RecyclerAdapter adapter;
     RecyclerAdapter.MyClickListener listener;
+    View.OnClickListener logOutListener;
     ArrayList<Object> cardItems = new ArrayList<>();
     TextView title;
     TextView sub;
-    int clickCount = 0;
     int applyCount = 0;
-    Button infoEdit;
+    static int clickCount = 0;
+    long startTime = 0;
 
     Thread logOutThread;
+    Thread getCountThread;
 
     ProgressDialog progressDialog;
 
@@ -78,9 +75,6 @@ public class MainSelection extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_selection);
-        //userName = (TextView)findViewById(R.id.user_name);
-        //logOut = (Button)findViewById(R.id.logout);
-        //infoEdit = (Button)findViewById(R.id.info_edit);
 
         driverNum = getIntent().getExtras().getString("driver_num");
         Typeface font= Typeface.createFromAsset(getAssets(),"aritta.ttf");
@@ -88,69 +82,48 @@ public class MainSelection extends AppCompatActivity {
         adapter = new RecyclerAdapter(cardItems, MainSelection.this);
         layoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
+        // 카드뷰 클릭 리스너
         listener = new RecyclerAdapter.MyClickListener() {
             @Override
             public void onItemClick(int position, View v) {
                 switch(position){
                     // case0: 프로필
                     case 0:
-                        if(clickCount == 0)
-                            Toast.makeText(getApplicationContext(),"한번 더 누르면 로그아웃 됩니다.",Toast.LENGTH_SHORT).show();
-                        clickCount++;
-                        v.findViewById(R.id.log_out).setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                if (NetworkConnection())
-                                    try {
-                                        progressDialog.show();
-                                        logOutThread.start();
-                                        logOutThread.join();
-                                        if(!isLogOutFinished) {
-                                            progressDialog.dismiss();
-                                            return;
-                                        }
-                                        progressDialog.dismiss();
-                                        finish();
-                                    }catch (Exception e){
-                                        e.printStackTrace();
-                                        Log.e("error",""+e);
-                                        progressDialog.dismiss();
-                                    }
-                                else
-                                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
-                            }
-                        });
 
                         break;
+                    // case1: 수강신청
                     case 1:
                         Intent intent1 =new Intent(getApplicationContext(), Apply.class);
                         intent1.putExtra("driver_num", driverNum);
                         startActivity(intent1);
                         break;
+                    // case2: 방과후 수강신청
                     case 2:
                         Intent intent2 =new Intent(getApplicationContext(), AfterApply.class);
                         intent2.putExtra("driver_num", driverNum);
                         startActivity(intent2);
                         break;
-                    // case3: 방과후 수강신청
+                    // 현재 진행중인 수강신청의 개수 표시
                     case 3:
 
                         break;
-
+                    // 현재 앱의 버전 표시
                     case 4:
 
                         break;
+                    // case5: 수강신청 기록
                     case 5:
                         Intent intent3 =new Intent(getApplicationContext(), ApplyHistory.class);
                         intent3.putExtra("driver_num", driverNum);
                         startActivity(intent3);
                         break;
+                    // case6: 방과후 수강신청 기록
                     case 6:
                         Intent intent4 =new Intent(getApplicationContext(), AfterApplyHistory.class);
                         intent4.putExtra("driver_num", driverNum);
                         startActivity(intent4);
                         break;
-
+                    // 설정창
                     case 7:
                     Intent intent5 =new Intent(getApplicationContext(), SettingActivity.class);
                         startActivity(intent5);
@@ -187,12 +160,80 @@ public class MainSelection extends AppCompatActivity {
         sub.startAnimation(animation);
 
         name = getIntent().getExtras().getString("user_name");
-        try {
-            applyCount = new GetCount().execute().get();
-        }catch (Exception e){
+        applyCount = 0;
 
+        getCountThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    URL url;
+                    url = new URL(HOST_GET_APPLY_COUNT);
+                    HttpClient httpClient = new DefaultHttpClient();
+                    HttpPost httpPost = new HttpPost();
+                    httpPost.setURI(url.toURI());
+
+                    ArrayList<BasicNameValuePair> post = new ArrayList<>();
+
+                    post.add(new BasicNameValuePair("driver_num",driverNum));
+
+                    httpPost.setEntity(new UrlEncodedFormEntity(post, HTTP.UTF_8));
+
+                    HttpResponse httpResponse = httpClient.execute(httpPost);
+
+                    String response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
+                    applyCount = Integer.parseInt(response);
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                    applyCount = 0;
+                }
+            }
+        });
+
+        try {
+            getCountThread.start();
+            getCountThread.join();
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        cardItems.add(new CardProfileItem(getResources().getDrawable(R.drawable.apply), name));
+
+        // 로그아웃 버튼 리스너 구현부
+        logOutListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (clickCount == 0){
+                    Toast.makeText(getApplicationContext(), "한 번더 누르면 로그아웃 됩니다.", Toast.LENGTH_SHORT).show();
+                    clickCount++;
+                    startTime = System.currentTimeMillis();
+                    return;
+                }
+                if(NetworkConnection() && (System.currentTimeMillis() - startTime) < 2000) {
+                    try {
+                        progressDialog.show();
+                        logOutThread.start();
+                        logOutThread.join();
+                        if (!isLogOutFinished) {
+                            progressDialog.dismiss();
+                            return;
+                        }
+                        progressDialog.dismiss();
+                        setResult(100);
+                        finish();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Log.e("error", "" + e);
+                        progressDialog.dismiss();
+                    }
+                }else if (!NetworkConnection()) {
+                    Toast.makeText(getApplicationContext(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
+                    clickCount = 0;
+                }
+                else
+                    clickCount = 0;
+            }
+        };
+
+        cardItems.add(new CardProfileItem(getResources().getDrawable(R.drawable.apply), name, logOutListener));
         cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.apply),"수강 신청", background[0]));
         cardItems.add(new CardViewItem(getResources().getDrawable(R.drawable.after_apply),"방과후 수강 신청", background[1]));
         cardItems.add(new CardStringItem("수강신청 1.0","",background[0], background[3]));
@@ -205,9 +246,6 @@ public class MainSelection extends AppCompatActivity {
         adapter.notifyDataSetChanged();
         recyclerView.setAdapter(adapter);
 
-
-        //name = "이름:"+getIntent().getExtras().getString("user_name");
-        //driverNum = getIntent().getExtras().getString("driver_num");
         progressDialog = new ProgressDialog(MainSelection.this);
         //userName.setText(name);
         progressDialog.setMessage("로그 아웃 중입니다.");
@@ -244,58 +282,11 @@ public class MainSelection extends AppCompatActivity {
             }
         });
 
+
     }
 
-    private class GetCount extends AsyncTask<Void, Void, Integer>{
-        ProgressDialog dialog;
-        URL url;
-        GetCount(){
-            dialog = new ProgressDialog(MainSelection.this);
-        }
 
-        @Override
-        protected void onPreExecute() {
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            dialog.setMessage("정보를 가져오는 중입니다.");
-            dialog.setCancelable(false);
-            dialog.show();
-            super.onPreExecute();
-        }
 
-        @Override
-        protected Integer doInBackground(Void... params) {
-            try {
-
-                url = new URL(HOST_GET_APPY_COUNT);
-                HttpClient httpClient = new DefaultHttpClient();
-                HttpPost httpPost = new HttpPost();
-                httpPost.setURI(url.toURI());
-
-                ArrayList<BasicNameValuePair> post = new ArrayList<>();
-
-                post.add(new BasicNameValuePair("driver_num",driverNum));
-
-                httpPost.setEntity(new UrlEncodedFormEntity(post, HTTP.UTF_8));
-
-                HttpResponse httpResponse = httpClient.execute(httpPost);
-
-                String response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
-
-                return Integer.parseInt(response);
-
-            }catch (Exception e){
-                e.printStackTrace();
-                Log.e("error","");
-                return 0;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Integer aVoid) {
-            dialog.dismiss();
-            super.onPostExecute(aVoid);
-        }
-    }
 
     @Override
     public void onBackPressed() {

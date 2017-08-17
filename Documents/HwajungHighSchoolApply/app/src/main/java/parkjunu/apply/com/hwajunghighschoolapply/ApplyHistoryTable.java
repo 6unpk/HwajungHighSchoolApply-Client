@@ -20,7 +20,6 @@ public class ApplyHistoryTable extends AppCompatActivity {
     TableLayout table;
     ArrayList<CheckboxValue> checkBoxes = new ArrayList<>();
 
-
     static String driverNum;
     String source;
 

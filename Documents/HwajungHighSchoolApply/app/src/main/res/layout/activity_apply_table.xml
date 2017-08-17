@@ -7,9 +7,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     android:background="@color/white"
     tools:context="parkjunu.apply.com.hwajunghighschoolapply.ApplyTable">
 
@@ -34,19 +31,23 @@
                     android:text=""/>
 
                 <info.hoang8f.widget.FButton
+                    android:layout_margin="4dp"
+                    android:id="@+id/save"
+                    app:buttonColor="@color/background"
+                    app:shadowHeight="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="저장 하기"
+                    />
+                <info.hoang8f.widget.FButton
+                    android:layout_margin="4dp"
                     android:id="@+id/refresh"
                     app:buttonColor="@color/background"
+                    app:shadowHeight="0dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="새로고침"/>
-
-                <info.hoang8f.widget.FButton
-                    android:id="@+id/submit"
-                    app:buttonColor="@color/background"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="저장하기"/>
-
+                    android:text="새로 고침"
+                    />
             </LinearLayout>
         </android.support.v7.widget.CardView>
 

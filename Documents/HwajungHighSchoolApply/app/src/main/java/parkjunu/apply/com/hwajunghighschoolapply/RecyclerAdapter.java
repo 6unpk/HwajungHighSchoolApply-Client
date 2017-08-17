@@ -26,7 +26,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_STRING = 3;
     private int lastPos = -1;
     private Context context;
-    public static Button logOut;
 
 
     public static class CardViewItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener
@@ -61,7 +60,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             title = (TextView) itemView.findViewById(R.id.title);
             sub = (TextView) itemView.findViewById(R.id.sub);
             cardView = (CardView) itemView.findViewById(R.id.card_view);
-
             itemView.setOnClickListener(this);
         }
 
@@ -76,6 +74,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         TextView title;
         ImageView imageView;
         CardView cardView;
+        Button logOut;
+
         public CardViewProfileHolder(View itemView){
             super(itemView);
 
@@ -83,6 +83,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             title = (TextView) itemView.findViewById(R.id.title);
             logOut = (Button) itemView.findViewById(R.id.log_out);
             imageView = (ImageView) itemView.findViewById(R.id.profile);
+
+            logOut.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    MainSelection.logOutCount++;
+                }
+            });
             itemView.setOnClickListener(this);
         }
 
@@ -141,6 +148,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
         else if (getItemViewType(position) == TYPE_PROFILE){
             ((CardViewProfileHolder) holder).title.setText(((CardProfileItem) mData.get(position)).getSub());
+            ((CardViewProfileHolder) holder).logOut.setOnClickListener(((CardProfileItem) mData.get(position)).getListener());
             setAnimation(((CardViewProfileHolder) holder).cardView, position);
         }
     }
@@ -161,12 +169,12 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     }
 
+
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_NORMAL) {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.card_view_layout, parent, false);
-
             CardViewItemHolder cardviewItemHolder = new CardViewItemHolder(view);
             return cardviewItemHolder;
         } else if (viewType == TYPE_STRING){

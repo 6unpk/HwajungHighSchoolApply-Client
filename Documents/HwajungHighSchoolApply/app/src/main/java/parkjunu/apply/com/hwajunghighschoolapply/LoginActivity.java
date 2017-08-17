@@ -35,7 +35,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cengalabs.flatui.views.FlatEditText;
-import com.melnykov.fab.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 import org.apache.http.HttpResponse;
@@ -64,8 +65,10 @@ public class LoginActivity extends AppCompatActivity {
     static final String HOST_ADDRESS = "http://45.32.52.41:5000";
     static final String HOST_GET_NAME_ADDRESS ="http://45.32.52.41:5000/get_name";
 
+    Intent mainSelection;
     MaterialEditText User_ID;
     MaterialEditText Password;
+    FloatingActionsMenu actionMenu;
     FloatingActionButton actionButton;
     Button submitButton;
     Button pwFindButton;
@@ -83,7 +86,6 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         startService(new Intent(getApplicationContext(), SchoolFood.class));
         startActivity(new Intent(getApplicationContext(), Splash.class));
-        startActivity(new Intent(getApplicationContext(), AfterApplyTable.class));
 
         pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = pref.edit();
@@ -114,7 +116,8 @@ public class LoginActivity extends AppCompatActivity {
         saveLogin = (CheckBox) findViewById(R.id.save_login);
         Hwajung = (ImageView) findViewById(R.id.hwajung);
         Developer = (TextView) findViewById(R.id.developer);
-        actionButton = (FloatingActionButton) findViewById(R.id.setting);
+        actionMenu = (FloatingActionsMenu) findViewById(R.id.menu);
+        actionButton = (FloatingActionButton) findViewById(R.id.button_a);
 
         Hwajung.startAnimation(animation);
         User_ID.startAnimation(animation);
@@ -123,7 +126,7 @@ public class LoginActivity extends AppCompatActivity {
         pwFindButton.startAnimation(animation);
         saveLogin.startAnimation(animation);
         Developer.startAnimation(animation);
-        actionButton.startAnimation(animation);
+        actionMenu.startAnimation(animation);
 
         // 로그인 정보 저장, 체크 되어 있는 경우
         if(pref.getBoolean("save_login",false)){
@@ -163,13 +166,16 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // 설정 버튼
+
         actionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getApplicationContext(), SettingActivity.class));
+                Intent intent = new Intent(getApplicationContext(), SettingActivity.class);
+                startActivity(intent);
             }
         });
 
+        mainSelection = new Intent(getApplicationContext(), MainSelection.class);
     }
 
     private void executeLogin(){
@@ -180,29 +186,26 @@ public class LoginActivity extends AppCompatActivity {
         if (!User_ID.getText().toString().equals("") && !Password.getText().toString().equals("")) {
             // 로그인 실행
             new SendPost(User_ID.getText().toString(), Password.getText().toString()).execute();
-            User_ID.setText("");
-            Password.setText("");
         } else
             Toast.makeText(getApplicationContext(), "아이디와 패스워드를 입력해주세요.", Toast.LENGTH_SHORT).show();
     }
 
     // 로그인 정보 값을 서버로 전송
-    private class SendPost extends AsyncTask<Void, Void, Void>{
+    private class SendPost extends AsyncTask<Void, Void , Void>{
         private String id, password;
         private String response;
-        private String reponse2;
+        ProgressDialog dialog;
         Boolean isCheck;
         URL url;
-        URL url2;
-        ProgressDialog dialog = new ProgressDialog(LoginActivity.this);
 
         public SendPost(String id, String password){
             this.id = id;
             this.password = password;
+            isCheck = saveLogin.isChecked();
+            dialog = new ProgressDialog(LoginActivity.this);
             dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             dialog.setMessage("로그인 중입니다.");
             dialog.setCancelable(false);
-            isCheck = saveLogin.isChecked();
         }
 
         @Override
@@ -250,10 +253,11 @@ public class LoginActivity extends AppCompatActivity {
                     response = EntityUtils.toString(httpResponse.getEntity(), HTTP.UTF_8);
 
                     isLoginSuc = true;
+                    // 여기서 response 는 서버로 부터 받는 유저 이름값
+                    mainSelection.putExtra("user_name",response).putExtra("driver_num", args[1]);
                     dialog.cancel();
                     dialog.dismiss();
-                    // 여기서 response 는 서버로 부터 받는 유저 이름값
-                    startActivity(new Intent(getApplicationContext(), MainSelection.class).putExtra("user_name",response).putExtra("driver_num", args[1]));
+                    startActivity(mainSelection);
                     if (isCheck) {
                         editor.putString("id", id);
                         editor.putString("pw", password);
@@ -280,7 +284,9 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             if(!isLoginSuc)
                Toast.makeText(getApplicationContext(), "로그인에 실패했습니다.", Toast.LENGTH_LONG).show();
-            isLoginSuc = false;
+            else
+                Toast.makeText(getApplicationContext(), "로그인에 성공했습니다.", Toast.LENGTH_LONG).show();
+
             super.onPostExecute(aVoid);
         }
     }
@@ -309,6 +315,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
         return super.onTouchEvent(event);
     }
 
@@ -326,6 +333,15 @@ public class LoginActivity extends AppCompatActivity {
             default:
 
                 break;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(actionMenu.isExpanded()) {
+            actionMenu.collapse();
+        }else {
+            super.onBackPressed();
         }
     }
 

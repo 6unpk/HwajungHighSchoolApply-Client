@@ -6,6 +6,7 @@
     android:background="#FFFFFF"
     xmlns:flatui="http://schemas.android.com/apk/res-auto"
     xmlns:app = "http://schemas.android.com/apk/res-auto"
+    xmlns:fab = "http://schemas.android.com/apk/res-auto"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
@@ -100,27 +101,28 @@
                     android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:layout_marginTop="2dp"
                     android:weightSum="2">
 
-                    <info.hoang8f.widget.FButton
+                    <com.cengalabs.flatui.views.FlatButton
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:text="로그인"
+                        flatui:theme="@array/snow"
+                        flatui:fl_touchEffect="fl_ripple"
+                        flatui:fl_cornerRadius="5dp"
                         android:layout_gravity="center"
-                        app:shadowHeight="0dp"
-                        app:cornerRadius="8dp"
-                        app:buttonColor="@color/deep_light"
                         android:layout_margin="4dp"
                         android:id="@+id/submit"
                         android:layout_weight="1" />
 
-                    <info.hoang8f.widget.FButton
+                    <com.cengalabs.flatui.views.FlatButton
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="비번 찾기"
-                        app:shadowHeight="0dp"
-                        app:cornerRadius="8dp"
-                        app:buttonColor="@color/deep_light"
+                        flatui:theme="@array/snow"
+                        flatui:fl_touchEffect="fl_ripple"
+                        flatui:fl_cornerRadius="5dp"
                         android:layout_margin="4dp"
                         android:layout_gravity="center"
                         android:id="@+id/password_find"
@@ -146,8 +148,10 @@
 
             <TextView
                 android:text="Developed By 화정고 CPU"
+                android:textSize="10dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/dark_light"
                 android:gravity="bottom|center"
                 android:id="@+id/developer"
                 android:layout_margin="4dp"
@@ -157,18 +161,30 @@
     </LinearLayout>
 
 
-        <com.melnykov.fab.FloatingActionButton
-            android:id="@+id/setting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right"
-            android:padding="32dp"
-            android:src="@drawable/setting_main"
-            flatui:fab_colorNormal="@color/deep_light"
-            flatui:fab_shadow="false"
-            flatui:fab_type="normal"
-
-            />
+            <com.getbase.floatingactionbutton.FloatingActionsMenu
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:id="@+id/menu"
+                fab:fab_title="Label on the right"
+                fab:fab_addButtonColorPressed="@color/cardBackground"
+                fab:fab_addButtonColorNormal="@color/subColor"
+                fab:fab_addButtonPlusIconColor="@color/cardBackground"
+                fab:fab_labelStyle="@style/menu_labels_style"
+                fab:fab_labelsPosition="left"
+                >
+                <com.getbase.floatingactionbutton.FloatingActionButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/button_a"
+                    fab:fab_size="mini"
+                    fab:fab_icon="@drawable/setting_main"
+                    fab:fab_title="급식 알리미 설정"
+                    fab:fab_addButtonColorPressed="@color/deep_light"
+                    fab:fab_colorNormal="@color/cardBackground"
+                    android:padding="16dp"/>
+            </com.getbase.floatingactionbutton.FloatingActionsMenu>
+            
     </FrameLayout>
 
 </RelativeLayout>

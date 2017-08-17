@@ -30,11 +30,17 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,9 +48,7 @@ import java.util.Calendar;
 // Setting Activity 에서 호출하는 Service
 public class SchoolFoodNotice extends Service {
 
-    static final String HOST_ADDRESS_SCHOOL_FOOD = "http://45.32.52.41:5000/get_school_food";
-    Calendar calendar;
-    String source;
+    static Calendar calendar;
 
     public SchoolFoodNotice(){
     }
@@ -54,7 +58,7 @@ public class SchoolFoodNotice extends Service {
         super.onCreate();
         calendar = Calendar.getInstance();
         getTodaySchoolFood();
-
+        stopSelf();
     }
 
 
@@ -67,15 +71,18 @@ public class SchoolFoodNotice extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 ,notification, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        String foods[] = content.split(":");
+        String foods[] = content.split(" ");
+        StringBuffer buffer = new StringBuffer();
 
-        content = "";
+        // 개행문자 추가로 급식 정보 정렬
         for (String food: foods)
-            content += food + "\n";
+            buffer.append(food + "\n");
 
         // 급식이 없거나 학교를 안가는날
         if (foods.length < 2)
             content = "오늘은 급식이 없거나 학교를 안가겠죠?";
+        else
+            content = buffer.toString();
 
         String title =""+ month +"월 "+ today +"일 급식 알리미";
         builder.setContentTitle(title).
@@ -122,22 +129,15 @@ public class SchoolFoodNotice extends Service {
             String line;
             String source = "";
             while((line = reader.readLine()) != null)
-                source += line;
+            source += line;
 
             Log.d("tag", "Reading SchoolFood.txt was completed");
 
-            JSONObject jsonObject = new JSONObject(source);
-            String content = "오늘의 급식은 없습니다.";
-            for(int i = 1; i < 36; ++i) {
-                JSONObject obj = jsonObject.getJSONObject("" + i);
-                String str = obj.getString("content");
-                // json 파일 content 요소의 날짜값이 시스템의 날짜와 동일 할 때 까지 순차적으로 탐색
-                if(str.split(":")[0].equals(" "+date)) {
-                    content = str;
-                    break;
-                }
-            }
+            JSONObject obj = new JSONObject(source);
+            String content = "";
 
+            // json 파일의 날짜값(KEY)을 통해 해당 날짜에 있는 급식 정보를 불러온다
+            content = obj.getString(Integer.toString(date));
             CallNotification(content);
 
         }catch (Exception e){
@@ -149,39 +149,35 @@ public class SchoolFoodNotice extends Service {
     }
 
     private class GetSchoolFood extends AsyncTask<Void, Void, Void> {
-        URL url;
-        ProgressDialog dialog;
-
+        boolean isError = false;
         public GetSchoolFood(){
-            dialog = new ProgressDialog(SchoolFoodNotice.this);
-            dialog.setMessage("급식 정보를 불러오는 중입니다.");
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            dialog.setCancelable(false);
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            dialog.show();
+            Log.d("tag","ok");
         }
 
         @Override
         protected Void doInBackground(Void... params) {
             try{
-                url = new URL(HOST_ADDRESS_SCHOOL_FOOD);
-                HttpClient httpClient = new DefaultHttpClient();
-                HttpPost httpPost = new HttpPost();
-                httpPost.setURI(url.toURI());
+                // 경기도 교육청 급식표 가져오기, 학교코드 J100000869 (쿠키값)
+                StringBuffer url = new StringBuffer("http://stu.goe.go.kr/sts_sci_md00_001.do");
+                url.append("?");
+                url.append("schulCode=J100000869&");
+                url.append("schulCrseScCode=4&");
+                url.append("schulKndScCode=04&");
+                url.append("schYm="+calendar.get(Calendar.YEAR)+String.format("%02d", (calendar.get(Calendar.MONTH) + 1))+"&");
 
-                ArrayList<NameValuePair> post = new ArrayList<>();
-                post.add(new BasicNameValuePair("request","hwajung"));
-                httpPost.setEntity(new UrlEncodedFormEntity(post));
-                HttpResponse response = httpClient.execute(httpPost);
-                source = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+                String content = getContentFromUrl(new URL(url.toString()), "<tbody>", "</tbody>");
+                Log.d("tag", content);
+                parseToJSOSN(content);
 
             }catch (Exception e){
                 e.printStackTrace();
                 Log.e("error", ""+e);
+                isError = true;
             }
             return null;
         }
@@ -189,20 +185,79 @@ public class SchoolFoodNotice extends Service {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            File file = new File(""+getExternalFilesDir(null));
-            FileOutputStream outputStream;
-            try{
-                outputStream = new FileOutputStream(file.getPath()+"/SchoolFood.txt");
-                outputStream.write(source.getBytes());
-                outputStream.close();
-            }catch (Exception e){
-                e.printStackTrace();
-                Log.e("error", ""+e);
-            }
-            dialog.dismiss();
+            // 급식표를 불러오지 못했을경우 SchoolFood.txt에 error로 파일을 저장
+            if (isError){
+                try {
+                    File file = new File(""+getExternalFilesDir(null));
+                    FileOutputStream outputStream;
+                    outputStream = new FileOutputStream(file.getPath()+"/SchoolFood.txt");
+                    String error = "error";
+                    outputStream.write(error.getBytes());
+                    outputStream.close();
+                }catch (Exception e){
 
+                }
+            }
         }
     }
+
+    public String getContentFromUrl(URL url, String readAfter, String readBefore) {
+
+        try{
+            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+
+            StringBuffer buffer = new StringBuffer();
+            String inputLine;
+
+            boolean reading = false;
+
+
+            while((inputLine = reader.readLine()) != null){
+                if (reading){
+                    if (inputLine.contains(readBefore))
+                        break;
+                    buffer.append(inputLine);
+                } else {
+                    if ( inputLine.contains(readAfter))
+                        reading = true;
+                }
+            }
+            reader.close();
+            return buffer.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            Log.d("tag", ""+e);
+            return "";
+        }
+    }
+
+    // 다운받은 급식 정보를 JSON으로 변환후 저장
+    public void parseToJSOSN(String content){
+        try {
+            Document jsoup = Jsoup.parse(content);
+            Elements tds = jsoup.select("div");
+            JSONObject jsonObject = new JSONObject();
+
+            int date = 1;
+            for(int i = 0; i < tds.size(); ++i){
+                if(!tds.get(i).text().equals("")){
+                    jsonObject.put(Integer.toString(date), tds.get(i).text());
+                    ++date;
+                }
+            }
+            File file = new File(""+getExternalFilesDir(null));
+            FileOutputStream outputStream;
+            outputStream = new FileOutputStream(file.getPath()+"/SchoolFood.txt");
+            outputStream.write(jsonObject.toString().getBytes());
+            outputStream.close();
+
+        }catch (Exception e){
+            e.printStackTrace();
+            Log.d("error", "" + e);
+        }
+
+    }
+
 
     public boolean NetworkConnection() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
